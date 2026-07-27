@@ -84,6 +84,7 @@
   --ink: oklch(0.2332 0.0151 166.18);
   --brand: oklch(0.3056 0.0487 167.08);
   --brand-soft: oklch(0.7648 0.032 140.73);
+  --brand-tint: oklch(0.9535 0.0132 140.73);
   --critical: oklch(0.5013 0.1783 28.7);
   --high: oklch(0.5133 0.0906 61.59);
   --medium: oklch(0.5102 0.0268 156.95);
