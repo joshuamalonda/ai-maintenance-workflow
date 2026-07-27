@@ -3,8 +3,10 @@ import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 
-export type MaintenanceCase =
-  Database["public"]["Tables"]["maintenance_cases"]["Row"];
+export type MaintenanceCase = Omit<
+  Database["public"]["Tables"]["maintenance_cases"]["Row"],
+  "created_at"
+>;
 
 const CASE_COLUMNS =
   "id, reference_code, tenant_name, property_address, issue_category, issue_description, urgency, status, ai_summary, ai_confidence, last_ai_action, source_channel, reported_at, updated_at";
