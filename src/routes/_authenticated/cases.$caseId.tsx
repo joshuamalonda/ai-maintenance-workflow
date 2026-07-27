@@ -16,16 +16,16 @@ export const Route = createFileRoute("/_authenticated/cases/$caseId")({
   },
   head: () => ({
     meta: [
-      { title: "Case detail — AI Maintenance Operations" },
+      { title: "Case detail — Ovelo" },
       {
         name: "description",
         content:
-          "AI summary, issue description and case information for a single maintenance case.",
+          "Case summary, issue description and case information for a single Ovelo maintenance case.",
       },
-      { property: "og:title", content: "Case detail — AI Maintenance Operations" },
+      { property: "og:title", content: "Case detail — Ovelo" },
       {
         property: "og:description",
-        content: "AI summary and case information for a maintenance case.",
+        content: "Full detail for a maintenance case handled in Ovelo.",
       },
     ],
   }),
@@ -38,8 +38,11 @@ function Fallback({ title }: { title: string }) {
   return (
     <div className="mx-auto max-w-2xl px-6 py-24 text-center">
       <h1 className="text-xl font-semibold text-ink">{title}</h1>
-      <Link to="/" className="mt-4 inline-block text-sm font-medium text-primary hover:underline">
-        Back to case queue
+      <Link
+        to="/cases"
+        className="mt-4 inline-block text-sm font-medium text-primary hover:underline"
+      >
+        Back to cases
       </Link>
     </div>
   );
@@ -61,8 +64,8 @@ function CaseDetail() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
-      <Link to="/" className="text-sm font-medium text-primary hover:underline">
-        ← Case queue
+      <Link to="/cases" className="text-sm font-medium text-primary hover:underline">
+        ← Cases
       </Link>
 
       <header className="mt-4 flex flex-wrap items-start justify-between gap-4 border-b border-border pb-6">
@@ -81,10 +84,10 @@ function CaseDetail() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <div className="space-y-6">
-          <section className="rounded-xl border border-primary/25 bg-brand-soft/60 p-5">
+          <section className="rounded-md border border-primary/25 bg-brand-tint p-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-mono text-xs uppercase tracking-[0.18em] text-accent-foreground">
-                AI summary
+                Case summary
               </h2>
               {data.ai_confidence != null && (
                 <span className="font-mono text-xs text-accent-foreground">
@@ -93,16 +96,17 @@ function CaseDetail() {
               )}
             </div>
             <p className="mt-3 text-sm leading-relaxed text-ink">
-              {data.ai_summary ?? "No AI summary generated for this case yet."}
+              {data.ai_summary ??
+                "Ovelo has not produced a summary for this case yet. It appears once the first tenant or contractor exchange has been processed."}
             </p>
             {data.last_ai_action && (
               <p className="mt-4 border-t border-primary/20 pt-3 text-xs text-accent-foreground">
-                Last AI action: {data.last_ai_action}
+                Last action: {data.last_ai_action}
               </p>
             )}
           </section>
 
-          <section className="rounded-xl border border-border bg-surface p-5">
+          <section className="rounded-md border border-border bg-surface p-5">
             <h2 className="text-sm font-semibold text-ink">Issue description</h2>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               {data.issue_description}
@@ -110,7 +114,7 @@ function CaseDetail() {
           </section>
         </div>
 
-        <aside className="rounded-xl border border-border bg-surface p-5">
+        <aside className="rounded-md border border-border bg-surface p-5">
           <h2 className="text-sm font-semibold text-ink">Case information</h2>
           <dl className="mt-2">
             <Field label="Tenant" value={data.tenant_name} />
