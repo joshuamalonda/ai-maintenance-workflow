@@ -7,10 +7,57 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { supabase } from "@/integrations/supabase/client";
+
+function SessionControls() {
+  const router = useRouter();
+  const { queryClient } = Route.useRouteContext();
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
+      setSignedIn(!!session);
+      router.invalidate();
+      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [router, queryClient]);
+
+  async function signOut() {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await supabase.auth.signOut();
+    router.navigate({ to: "/auth", replace: true });
+  }
+
+  if (!signedIn) {
+    return (
+      <Link to="/auth" className="text-xs font-medium text-primary hover:underline">
+        Sign in
+      </Link>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-4">
+      <span className="hidden font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground sm:inline">
+        Assistant online
+      </span>
+      <button
+        onClick={signOut}
+        className="rounded-md border border-input px-2.5 py-1 text-xs font-medium text-ink transition-colors hover:bg-accent"
+      >
+        Sign out
+      </button>
+    </div>
+  );
+}
 
 function NotFoundComponent() {
   return (
@@ -142,9 +189,7 @@ function RootComponent() {
                 AI Maintenance Operations
               </span>
             </Link>
-            <span className="hidden font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground sm:inline">
-              Assistant online
-            </span>
+            <SessionControls />
           </div>
         </header>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
