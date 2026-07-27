@@ -2,21 +2,22 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { OveloMark } from "@/components/ovelo-logo";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Sign in — AI Maintenance Operations" },
+      { title: "Sign in — Ovelo" },
       {
         name: "description",
         content:
-          "Sign in to the AI Maintenance Operations console to review maintenance cases handled by the assistant.",
+          "Sign in to Ovelo, the operations console letting agency teams use to run maintenance cases.",
       },
-      { property: "og:title", content: "Sign in — AI Maintenance Operations" },
+      { property: "og:title", content: "Sign in — Ovelo" },
       {
         property: "og:description",
-        content: "Staff sign-in for the AI maintenance operations console.",
+        content: "Staff sign-in for the Ovelo operations console.",
       },
     ],
   }),
@@ -67,18 +68,20 @@ function AuthPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-col justify-center px-6 py-20">
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">
-        Operations console
-      </p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">
-        {mode === "signin" ? "Sign in to continue" : "Create your console account"}
-      </h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Maintenance case data is restricted to authorised staff.
-      </p>
+    <main className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-16">
+      <div className="rounded-md border border-border bg-surface p-6 sm:p-8">
+        <div className="flex items-center gap-2.5">
+          <OveloMark />
+          <span className="text-[15px] font-semibold tracking-tight text-ink">Ovelo</span>
+        </div>
+        <h1 className="mt-6 text-xl font-semibold tracking-tight text-ink">
+          {mode === "signin" ? "Sign in to your workspace" : "Create your Ovelo account"}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Maintenance case data is restricted to authorised agency staff.
+        </p>
 
-      <form onSubmit={onSubmit} className="mt-8 space-y-4">
+        <form onSubmit={onSubmit} className="mt-6 space-y-4">
         <div>
           <label htmlFor="email" className="text-xs uppercase tracking-wide text-muted-foreground">
             Work email
@@ -116,26 +119,30 @@ function AuthPage() {
         >
           {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
         </button>
-      </form>
+        </form>
 
-      <button
+        <button
         onClick={onGoogle}
-        className="mt-3 w-full rounded-md border border-input bg-surface px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-accent"
-      >
-        Continue with Google
-      </button>
+          className="mt-3 w-full rounded-md border border-input bg-surface px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-brand-tint"
+        >
+          Continue with Google
+        </button>
 
-      {message && <p className="mt-4 text-sm text-muted-foreground">{message}</p>}
+        {message && <p className="mt-4 text-sm text-muted-foreground">{message}</p>}
 
-      <button
+        <button
         onClick={() => {
           setMode(mode === "signin" ? "signup" : "signin");
           setMessage(null);
         }}
-        className="mt-6 text-sm font-medium text-primary hover:underline"
-      >
-        {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
-      </button>
+          className="mt-6 text-sm font-medium text-primary hover:underline"
+        >
+          {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+        </button>
+      </div>
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        © {new Date().getFullYear()} Ovelo Technologies
+      </p>
     </main>
   );
 }

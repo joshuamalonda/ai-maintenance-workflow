@@ -7,57 +7,10 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { supabase } from "@/integrations/supabase/client";
-
-function SessionControls() {
-  const router = useRouter();
-  const { queryClient } = Route.useRouteContext();
-  const [signedIn, setSignedIn] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSignedIn(!!data.session));
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
-      setSignedIn(!!session);
-      router.invalidate();
-      if (event !== "SIGNED_OUT") queryClient.invalidateQueries();
-    });
-    return () => sub.subscription.unsubscribe();
-  }, [router, queryClient]);
-
-  async function signOut() {
-    await queryClient.cancelQueries();
-    queryClient.clear();
-    await supabase.auth.signOut();
-    router.navigate({ to: "/auth", replace: true });
-  }
-
-  if (!signedIn) {
-    return (
-      <Link to="/auth" className="text-xs font-medium text-primary hover:underline">
-        Sign in
-      </Link>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-4">
-      <span className="hidden font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground sm:inline">
-        Assistant online
-      </span>
-      <button
-        onClick={signOut}
-        className="rounded-md border border-input px-2.5 py-1 text-xs font-medium text-ink transition-colors hover:bg-accent"
-      >
-        Sign out
-      </button>
-    </div>
-  );
-}
 
 function NotFoundComponent() {
   return (
@@ -124,20 +77,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "AI Maintenance Operations" },
+      { title: "Ovelo — Lettings Maintenance Operations" },
       {
         name: "description",
         content:
-          "Internal console for monitoring letting maintenance cases handled by an AI assistant.",
+          "Ovelo is the operations console letting agencies use to run maintenance cases end to end.",
       },
-      { property: "og:title", content: "AI Maintenance Operations" },
+      { property: "og:title", content: "Ovelo — Lettings Maintenance Operations" },
       {
         property: "og:description",
-        content: "Internal AI operations console for letting maintenance cases.",
+        content: "The operations console letting agencies use to run maintenance cases.",
       },
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Ovelo" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -150,7 +103,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
   }),
   shellComponent: RootShell,
@@ -179,19 +132,6 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background font-sans text-foreground">
-        <header className="sticky top-0 z-20 border-b border-border bg-surface/85 backdrop-blur">
-          <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3.5">
-            <Link to="/" className="flex items-center gap-2.5">
-              <span className="flex size-7 items-center justify-center rounded-md bg-primary font-mono text-xs font-semibold text-primary-foreground">
-                AI
-              </span>
-              <span className="text-sm font-semibold tracking-tight text-ink">
-                AI Maintenance Operations
-              </span>
-            </Link>
-            <SessionControls />
-          </div>
-        </header>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </div>
