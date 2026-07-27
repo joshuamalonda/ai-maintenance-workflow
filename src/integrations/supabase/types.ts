@@ -14,7 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      maintenance_cases: {
+        Row: {
+          ai_confidence: number | null
+          ai_summary: string | null
+          created_at: string
+          id: string
+          issue_category: string
+          issue_description: string
+          last_ai_action: string | null
+          property_address: string
+          reference_code: string
+          reported_at: string
+          source_channel: string
+          status: string
+          tenant_name: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_summary?: string | null
+          created_at?: string
+          id?: string
+          issue_category: string
+          issue_description: string
+          last_ai_action?: string | null
+          property_address: string
+          reference_code: string
+          reported_at?: string
+          source_channel?: string
+          status?: string
+          tenant_name: string
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_summary?: string | null
+          created_at?: string
+          id?: string
+          issue_category?: string
+          issue_description?: string
+          last_ai_action?: string | null
+          property_address?: string
+          reference_code?: string
+          reported_at?: string
+          source_channel?: string
+          status?: string
+          tenant_name?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
