@@ -9,7 +9,7 @@ const caseQuery = (id: string) =>
     queryFn: () => getCase({ data: { id } }),
   });
 
-export const Route = createFileRoute("/cases/$caseId")({
+export const Route = createFileRoute("/_authenticated/cases/$caseId")({
   loader: async ({ context, params }) => {
     const found = await context.queryClient.ensureQueryData(caseQuery(params.caseId));
     if (!found) throw notFound();

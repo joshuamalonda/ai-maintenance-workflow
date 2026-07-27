@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+
 import type { Database } from "@/integrations/supabase/types";
 
 export type MaintenanceCase = Omit<
@@ -11,39 +12,26 @@ export type MaintenanceCase = Omit<
 const CASE_COLUMNS =
   "id, reference_code, tenant_name, property_address, issue_category, issue_description, urgency, status, ai_summary, ai_confidence, last_ai_action, source_channel, reported_at, updated_at";
 
-function publicClient() {
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY!;
-  return createClient<Database>(process.env.SUPABASE_URL!, key, {
-    auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input, init) => {
-        const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`)
-          h.delete("Authorization");
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
-      },
-    },
+export const listCases = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("maintenance_cases")
+      .select(CASE_COLUMNS)
+      .order("reported_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []) as MaintenanceCase[];
   });
-}
-
-export const listCases = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await publicClient()
-    .from("maintenance_cases")
-    .select(CASE_COLUMNS)
-    .order("reported_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return data ?? [];
-});
 
 export const getCase = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string() }).parse(input))
-  .handler(async ({ data }) => {
-    const { data: row, error } = await publicClient()
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
       .from("maintenance_cases")
       .select(CASE_COLUMNS)
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return row;
+    return (row ?? null) as MaintenanceCase | null;
   });
