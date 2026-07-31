@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { CheckCircle2 } from "lucide-react";
 import { listCases, type MaintenanceCase } from "@/lib/cases.functions";
-import { StatusBadge, UrgencyBadge } from "@/components/case-badges";
+import { UrgencyBadge, statusLabels } from "@/components/case-badges";
 
 const casesQuery = queryOptions({
   queryKey: ["maintenance_cases"],
@@ -46,6 +47,12 @@ function hoursSince(date: string) {
   return (Date.now() - new Date(date).getTime()) / 3_600_000;
 }
 
+const toneClass: Record<string, string> = {
+  needs_attention: "bg-critical/10 text-critical",
+  in_progress: "bg-brand-tint text-primary",
+  completed: "bg-secondary text-muted-foreground",
+};
+
 function StatCard({ label, value, delta }: { label: string; value: string; delta: string }) {
   return (
     <div className="rounded-lg border border-border bg-surface p-4">
@@ -63,25 +70,28 @@ function JobRow({ c }: { c: MaintenanceCase }) {
     <Link
       to="/cases/$caseId"
       params={{ caseId: c.id }}
-      className="group grid gap-2 border-b border-border px-5 py-3.5 text-sm transition-colors last:border-b-0 hover:bg-brand-tint lg:grid-cols-[6.5rem_1.2fr_1.4fr_9rem_9rem] lg:items-center lg:gap-3"
+      className="group flex items-start gap-3 border-b border-border px-5 py-3.5 text-sm transition-colors last:border-b-0 hover:bg-brand-tint"
     >
-      <span className="font-mono text-[11px] text-muted-foreground">{c.reference_code}</span>
-      <span className="min-w-0">
-        <span className="block truncate font-medium text-ink group-hover:text-primary">
-          {c.property_address}
+      <span className="min-w-0 flex-1">
+        <span className="flex flex-wrap items-center gap-2">
+          <span className="font-mono text-[11px] text-muted-foreground">{c.reference_code}</span>
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+              toneClass[c.status] ?? toneClass.completed
+            }`}
+          >
+            {statusLabels[c.status] ?? c.status}
+          </span>
         </span>
-        <span className="block truncate text-xs text-muted-foreground">{c.tenant_name}</span>
-      </span>
-      <span className="min-w-0">
-        <span className="block truncate text-muted-foreground">
+        <span className="mt-1 block truncate font-medium text-ink group-hover:text-primary">
           {c.issue_category} — {c.issue_description}
         </span>
+        <span className="block truncate text-xs text-muted-foreground">
+          {c.property_address} · {c.tenant_name}
+        </span>
       </span>
-      <span>
+      <span className="shrink-0">
         <UrgencyBadge urgency={c.urgency} />
-      </span>
-      <span className="flex items-center gap-2">
-        <StatusBadge status={c.status} />
       </span>
     </Link>
   );
@@ -96,6 +106,21 @@ function Dashboard() {
   const completed = cases.filter((c) => c.status === "completed");
   const stale = attention.filter((c) => hoursSince(c.updated_at) > 24).length;
   const critical = open.filter((c) => c.urgency === "critical" || c.urgency === "high").length;
+
+  const resolutionDays = completed.length
+    ? completed.reduce(
+        (sum, c) =>
+          sum + (new Date(c.updated_at).getTime() - new Date(c.reported_at).getTime()) / 86_400_000,
+        0,
+      ) / completed.length
+    : null;
+
+  const total = cases.length || 1;
+  const flow = [
+    { label: "Needs attention", value: Math.round((attention.length / total) * 100) },
+    { label: "In progress", value: Math.round((inProgress.length / total) * 100) },
+    { label: "Completed", value: Math.round((completed.length / total) * 100) },
+  ];
 
   const priority = [...attention, ...inProgress].slice(0, 8);
 
@@ -124,41 +149,36 @@ function Dashboard() {
 
       <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Open cases"
+          label="Active jobs"
           value={String(open.length)}
           delta={`${critical} high or critical urgency`}
         />
         <StatCard
-          label="Needs attention"
+          label="Awaiting approval"
           value={String(attention.length)}
           delta={stale > 0 ? `${stale} waiting over 24h` : "Nothing overdue"}
+        />
+        <StatCard
+          label="Average resolution time"
+          value={resolutionDays === null ? "—" : `${resolutionDays.toFixed(1)} days`}
+          delta={completed.length ? `Across ${completed.length} resolved` : "No resolved cases yet"}
         />
         <StatCard
           label="In progress"
           value={String(inProgress.length)}
           delta="Handled by Ovelo, no action needed"
         />
-        <StatCard
-          label="Completed"
-          value={String(completed.length)}
-          delta="Resolved and closed"
-        />
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
         <section className="overflow-hidden rounded-lg border border-border bg-surface">
           <div className="flex items-center justify-between border-b border-border px-5 py-3">
-            <h2 className="text-sm font-semibold tracking-tight text-ink">Live cases</h2>
+            <h2 className="text-sm font-semibold tracking-tight text-ink">
+              Active maintenance jobs
+            </h2>
             <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-              Priority order
+              {open.length} open
             </span>
-          </div>
-          <div className="hidden grid-cols-[6.5rem_1.2fr_1.4fr_9rem_9rem] gap-3 border-b border-border bg-secondary px-5 py-2.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:grid">
-            <span>Reference</span>
-            <span>Property</span>
-            <span>Issue</span>
-            <span>Urgency</span>
-            <span>Status</span>
           </div>
           {priority.length === 0 ? (
             <div className="px-5 py-10">
@@ -179,6 +199,24 @@ function Dashboard() {
           )}
         </section>
 
+        <div className="space-y-4">
+        <section className="rounded-lg border border-border bg-surface p-5">
+          <h2 className="text-sm font-semibold tracking-tight text-ink">Case flow</h2>
+          <div className="mt-4 space-y-3">
+            {flow.map((b) => (
+              <div key={b.label}>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">{b.label}</span>
+                  <span className="font-mono text-[11px] text-ink">{b.value}%</span>
+                </div>
+                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
+                  <div className="h-full rounded-full bg-primary" style={{ width: `${b.value}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <aside className="overflow-hidden rounded-lg border border-border bg-surface">
           <div className="border-b border-border px-5 py-3">
             <h2 className="text-sm font-semibold tracking-tight text-ink">Recent activity</h2>
@@ -191,19 +229,27 @@ function Dashboard() {
             <ul className="divide-y divide-border">
               {activity.map((c) => (
                 <li key={c.id} className="px-5 py-3.5">
-                  <Link to="/cases/$caseId" params={{ caseId: c.id }} className="block group">
-                    <p className="text-sm text-ink group-hover:text-primary">
-                      {c.last_ai_action ?? `Case updated — ${c.issue_category}`}
-                    </p>
-                    <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                      {c.reference_code} · {relative(c.updated_at)}
-                    </p>
+                  <Link
+                    to="/cases/$caseId"
+                    params={{ caseId: c.id }}
+                    className="group flex items-start gap-2.5"
+                  >
+                    <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />
+                    <span className="min-w-0">
+                      <span className="block text-sm text-ink group-hover:text-primary">
+                        {c.last_ai_action ?? `Case updated — ${c.issue_category}`}
+                      </span>
+                      <span className="mt-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                        {c.reference_code} · {relative(c.updated_at)}
+                      </span>
+                    </span>
                   </Link>
                 </li>
               ))}
             </ul>
           )}
         </aside>
+        </div>
       </div>
     </div>
   );
