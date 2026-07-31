@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { listCases, type MaintenanceCase } from "@/lib/cases.functions";
-import { CategoryTag, StatusBadge, UrgencyBadge } from "@/components/case-badges";
+import { StatusBadge, UrgencyBadge } from "@/components/case-badges";
 
 const casesQuery = queryOptions({
   queryKey: ["maintenance_cases"],
