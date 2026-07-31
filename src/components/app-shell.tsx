@@ -1,13 +1,29 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
-import { LayoutDashboard, ListChecks, Menu, X } from "lucide-react";
+import {
+  Banknote,
+  ClipboardList,
+  HardHat,
+  LayoutGrid,
+  Menu,
+  Receipt,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { OveloWordmark } from "@/components/ovelo-logo";
 
 const nav = [
-  { to: "/", label: "Overview", icon: LayoutDashboard, exact: true },
-  { to: "/cases", label: "Cases", icon: ListChecks, exact: false },
+  { to: "/", label: "Overview", icon: LayoutGrid, exact: true },
+  { to: "/cases", label: "Work orders", icon: ClipboardList, exact: false },
+] as const;
+
+const upcoming = [
+  { label: "Contractors", icon: HardHat },
+  { label: "Approvals", icon: ShieldCheck },
+  { label: "Invoices", icon: Receipt },
+  { label: "Financials", icon: Banknote },
 ] as const;
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
@@ -32,6 +48,19 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         );
       })}
+      {upcoming.map((item) => (
+        <span
+          key={item.label}
+          aria-disabled
+          className="flex cursor-default items-center gap-2.5 rounded-md px-3 py-2 text-sm text-muted-foreground/70"
+        >
+          <item.icon className="size-4 shrink-0" />
+          <span className="truncate">{item.label}</span>
+          <span className="ml-auto font-mono text-[9px] uppercase tracking-[0.14em] text-muted-foreground/60">
+            Soon
+          </span>
+        </span>
+      ))}
     </nav>
   );
 }
