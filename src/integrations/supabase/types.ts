@@ -18,51 +18,81 @@ export type Database = {
         Row: {
           ai_confidence: number | null
           ai_summary: string | null
+          call_duration_secs: number | null
+          call_sid: string | null
+          contractor_required: boolean | null
+          conversation_id: string | null
           created_at: string
           id: string
           issue_category: string
           issue_description: string
           last_ai_action: string | null
+          missing_information: string | null
+          preferred_language: string | null
+          priority: string | null
           property_address: string
+          recommended_action: string | null
           reference_code: string
           reported_at: string
           source_channel: string
           status: string
           tenant_name: string
+          transcript: string | null
+          troubleshooting: string | null
           updated_at: string
           urgency: string
         }
         Insert: {
           ai_confidence?: number | null
           ai_summary?: string | null
+          call_duration_secs?: number | null
+          call_sid?: string | null
+          contractor_required?: boolean | null
+          conversation_id?: string | null
           created_at?: string
           id?: string
           issue_category: string
           issue_description: string
           last_ai_action?: string | null
+          missing_information?: string | null
+          preferred_language?: string | null
+          priority?: string | null
           property_address: string
+          recommended_action?: string | null
           reference_code: string
           reported_at?: string
           source_channel?: string
           status?: string
           tenant_name: string
+          transcript?: string | null
+          troubleshooting?: string | null
           updated_at?: string
           urgency?: string
         }
         Update: {
           ai_confidence?: number | null
           ai_summary?: string | null
+          call_duration_secs?: number | null
+          call_sid?: string | null
+          contractor_required?: boolean | null
+          conversation_id?: string | null
           created_at?: string
           id?: string
           issue_category?: string
           issue_description?: string
           last_ai_action?: string | null
+          missing_information?: string | null
+          preferred_language?: string | null
+          priority?: string | null
           property_address?: string
+          recommended_action?: string | null
           reference_code?: string
           reported_at?: string
           source_channel?: string
           status?: string
           tenant_name?: string
+          transcript?: string | null
+          troubleshooting?: string | null
           updated_at?: string
           urgency?: string
         }
