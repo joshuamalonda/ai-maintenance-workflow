@@ -131,8 +131,16 @@ function CaseDetail() {
           <Panel title="Issue description">{data.issue_description}</Panel>
 
           <Panel title="Recommended action">
-            {data.last_ai_action ?? "No recommended action recorded for this case yet."}
+            {data.recommended_action ??
+              data.last_ai_action ??
+              "No recommended action recorded for this case yet."}
           </Panel>
+
+          {data.troubleshooting && <Panel title="Troubleshooting">{data.troubleshooting}</Panel>}
+
+          {data.missing_information && (
+            <Panel title="Missing information">{data.missing_information}</Panel>
+          )}
 
           <section className="rounded-lg border border-border bg-surface">
             <button
@@ -150,8 +158,11 @@ function CaseDetail() {
             </button>
             {transcriptOpen && (
               <div className="border-t border-border px-5 py-4 text-sm leading-relaxed text-muted-foreground">
-                No transcript is stored for this case. Conversation transcripts are not part of the
-                maintenance case record yet.
+                {data.transcript ? (
+                  <p className="whitespace-pre-wrap">{data.transcript}</p>
+                ) : (
+                  "No transcript is stored for this case."
+                )}
               </div>
             )}
           </section>
@@ -165,8 +176,22 @@ function CaseDetail() {
               <Field label="Property address" value={data.property_address} />
               <Field label="Issue category" value={data.issue_category} />
               <Field label="Urgency" value={data.urgency} />
+              {data.priority && <Field label="Priority" value={data.priority} />}
               <Field label="Status" value={statusLabels[data.status] ?? data.status} />
               <Field label="Source channel" value={data.source_channel} />
+              {data.preferred_language && (
+                <Field label="Preferred language" value={data.preferred_language} />
+              )}
+              {data.contractor_required != null && (
+                <Field label="Contractor required" value={data.contractor_required ? "Yes" : "No"} />
+              )}
+              {data.call_duration_secs != null && (
+                <Field label="Call duration" value={`${data.call_duration_secs}s`} />
+              )}
+              {data.call_sid && <Field label="Call reference" value={data.call_sid} />}
+              {data.conversation_id && (
+                <Field label="Conversation ID" value={data.conversation_id} />
+              )}
               <Field label="Reported" value={new Date(data.reported_at).toLocaleString("en-GB")} />
               <Field label="Created at" value={new Date(data.created_at).toLocaleString("en-GB")} />
               <Field
