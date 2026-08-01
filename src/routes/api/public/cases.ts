@@ -15,7 +15,7 @@ const json = (body: unknown, status = 200) =>
   });
 
 const caseSchema = z.object({
-  reference_code: z.string().min(1).max(64),
+  reference_code: z.string().min(1).max(64).optional(),
   tenant_name: z.string().min(1).max(200),
   property_address: z.string().min(1).max(500),
   issue_category: z.string().min(1).max(100),
@@ -65,10 +65,13 @@ export const Route = createFileRoute("/api/public/cases")({
           return json({ error: "Validation failed", issues: parsed.error.issues }, 400);
         }
 
+        const { reference_code, ...rest } = parsed.data;
+        const insertPayload = reference_code ? { ...rest, reference_code } : rest;
+
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data, error } = await supabaseAdmin
           .from("maintenance_cases")
-          .insert(parsed.data)
+          .insert(insertPayload as never)
           .select("id, reference_code")
           .single();
 
