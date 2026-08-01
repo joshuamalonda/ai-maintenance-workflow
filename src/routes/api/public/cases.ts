@@ -65,10 +65,13 @@ export const Route = createFileRoute("/api/public/cases")({
           return json({ error: "Validation failed", issues: parsed.error.issues }, 400);
         }
 
+        const { reference_code, ...rest } = parsed.data;
+        const insertPayload = reference_code ? { ...rest, reference_code } : rest;
+
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data, error } = await supabaseAdmin
           .from("maintenance_cases")
-          .insert(parsed.data)
+          .insert(insertPayload as never)
           .select("id, reference_code")
           .single();
 
