@@ -1,0 +1,1 @@
+ALTER TABLE public.maintenance_cases ADD COLUMN IF NOT EXISTS call_recording_url text;

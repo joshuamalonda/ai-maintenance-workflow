@@ -130,6 +130,21 @@ function CaseDetail() {
 
           <Panel title="Issue description">{data.issue_description}</Panel>
 
+          <Panel title="Call recording">
+            {data.call_recording_url ? (
+              <audio
+                controls
+                preload="none"
+                src={data.call_recording_url}
+                className="w-full"
+              >
+                Your browser does not support the audio element.
+              </audio>
+            ) : (
+              "No recording available."
+            )}
+          </Panel>
+
           <Panel title="Recommended action">
             {data.recommended_action ??
               data.last_ai_action ??

@@ -19,6 +19,7 @@ export type Database = {
           ai_confidence: number | null
           ai_summary: string | null
           call_duration_secs: number | null
+          call_recording_url: string | null
           call_sid: string | null
           contractor_required: boolean | null
           conversation_id: string | null
@@ -46,6 +47,7 @@ export type Database = {
           ai_confidence?: number | null
           ai_summary?: string | null
           call_duration_secs?: number | null
+          call_recording_url?: string | null
           call_sid?: string | null
           contractor_required?: boolean | null
           conversation_id?: string | null
@@ -73,6 +75,7 @@ export type Database = {
           ai_confidence?: number | null
           ai_summary?: string | null
           call_duration_secs?: number | null
+          call_recording_url?: string | null
           call_sid?: string | null
           contractor_required?: boolean | null
           conversation_id?: string | null
