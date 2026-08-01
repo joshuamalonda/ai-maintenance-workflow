@@ -15,7 +15,7 @@ const json = (body: unknown, status = 200) =>
   });
 
 const caseSchema = z.object({
-  reference_code: z.string().min(1).max(64),
+  reference_code: z.string().min(1).max(64).optional(),
   tenant_name: z.string().min(1).max(200),
   property_address: z.string().min(1).max(500),
   issue_category: z.string().min(1).max(100),
