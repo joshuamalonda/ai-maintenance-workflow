@@ -27,6 +27,16 @@ const caseSchema = z.object({
   last_ai_action: z.string().max(2000).nullish(),
   source_channel: z.string().max(50).default("email"),
   reported_at: z.string().datetime().optional(),
+  preferred_language: z.string().max(100).nullish(),
+  priority: z.string().max(50).nullish(),
+  contractor_required: z.boolean().nullish(),
+  recommended_action: z.string().max(5000).nullish(),
+  troubleshooting: z.string().max(5000).nullish(),
+  missing_information: z.string().max(5000).nullish(),
+  transcript: z.string().max(100000).nullish(),
+  conversation_id: z.string().max(200).nullish(),
+  call_sid: z.string().max(200).nullish(),
+  call_duration_secs: z.number().int().min(0).max(86400).nullish(),
 });
 
 export const Route = createFileRoute("/api/public/cases")({
