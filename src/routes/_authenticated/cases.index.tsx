@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useCasesRealtime } from "@/hooks/use-cases-realtime";
 import { listCases } from "@/lib/cases.functions";
 import { CategoryTag, StatusBadge, UrgencyBadge, statusLabels } from "@/components/case-badges";
 
@@ -15,13 +16,13 @@ export const Route = createFileRoute("/_authenticated/cases/")({
   },
   head: () => ({
     meta: [
-      { title: "Cases — Ovelo" },
+      { title: "Maintenance cases — Ovelo" },
       {
         name: "description",
         content:
           "Search, filter and sort every maintenance case running through Ovelo for your agency.",
       },
-      { property: "og:title", content: "Cases — Ovelo" },
+      { property: "og:title", content: "Maintenance cases — Ovelo" },
       {
         property: "og:description",
         content: "The full maintenance case list for your letting agency.",
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/_authenticated/cases/")({
 const urgencyRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 };
 
 function CasesPage() {
+  useCasesRealtime();
   const { data: cases } = useSuspenseQuery(casesQuery);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
@@ -61,7 +63,7 @@ function CasesPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Cases</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Maintenance cases</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Every maintenance case across your portfolio, newest first.
         </p>

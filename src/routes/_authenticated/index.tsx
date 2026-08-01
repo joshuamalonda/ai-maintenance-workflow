@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { CheckCircle2 } from "lucide-react";
+import { AlertTriangle, ClipboardList, Clock, Inbox } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { listCases, type MaintenanceCase } from "@/lib/cases.functions";
 import { UrgencyBadge, statusLabels } from "@/components/case-badges";
+import { useCasesRealtime } from "@/hooks/use-cases-realtime";
 
 const casesQuery = queryOptions({
   queryKey: ["maintenance_cases"],
@@ -19,17 +21,25 @@ export const Route = createFileRoute("/_authenticated/")({
       {
         name: "description",
         content:
-          "Ovelo overview: live maintenance cases, what needs attention today and the latest activity across your portfolio.",
+          "Ovelo maintenance operations overview: active cases, emergencies, cases awaiting review and average response time.",
       },
       { property: "og:title", content: "Overview — Ovelo" },
       {
         property: "og:description",
-        content: "Daily operating picture for a letting agency's maintenance workload.",
+        content: "Live operating picture for a letting agency's maintenance workload.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
   }),
+  errorComponent: ({ error }) => (
+    <div role="alert" className="mx-auto max-w-2xl px-6 py-24 text-center text-sm text-ink">
+      {error.message}
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="mx-auto max-w-2xl px-6 py-24 text-center text-sm text-ink">Not found</div>
+  ),
   component: Dashboard,
 });
 
@@ -43,44 +53,68 @@ function relative(date: string) {
   return `${Math.round(h / 24)}d ago`;
 }
 
-function hoursSince(date: string) {
-  return (Date.now() - new Date(date).getTime()) / 3_600_000;
-}
-
 const toneClass: Record<string, string> = {
   needs_attention: "bg-critical/10 text-critical",
   in_progress: "bg-brand-tint text-primary",
   completed: "bg-secondary text-muted-foreground",
 };
 
-function StatCard({ label, value, delta }: { label: string; value: string; delta: string }) {
+function StatCard({
+  label,
+  value,
+  note,
+  icon: Icon,
+  emphasis,
+}: {
+  label: string;
+  value: string;
+  note: string;
+  icon: LucideIcon;
+  emphasis?: boolean;
+}) {
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-        {label}
+    <div
+      className={`rounded-lg border bg-surface p-4 ${
+        emphasis ? "border-critical/35" : "border-border"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+          {label}
+        </p>
+        <Icon className={`size-4 ${emphasis ? "text-critical" : "text-muted-foreground"}`} />
+      </div>
+      <p
+        className={`mt-3 text-3xl font-semibold tabular-nums tracking-tight ${
+          emphasis ? "text-critical" : "text-ink"
+        }`}
+      >
+        {value}
       </p>
-      <p className="mt-2 text-2xl font-semibold tabular-nums tracking-tight text-ink">{value}</p>
-      <p className="mt-1 text-xs text-muted-foreground">{delta}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{note}</p>
     </div>
   );
 }
 
-function JobRow({ c }: { c: MaintenanceCase }) {
+function CaseRow({ c }: { c: MaintenanceCase }) {
   return (
     <Link
       to="/cases/$caseId"
       params={{ caseId: c.id }}
-      className="group flex items-start gap-3 border-b border-border px-5 py-3.5 text-sm transition-colors last:border-b-0 hover:bg-brand-tint"
+      className="group grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 border-b border-border px-5 py-3.5 text-sm transition-colors last:border-b-0 hover:bg-brand-tint"
     >
-      <span className="min-w-0 flex-1">
+      <span className="min-w-0">
         <span className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-[11px] text-muted-foreground">{c.reference_code}</span>
           <span
-            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+            className={`rounded px-2 py-0.5 text-[10px] font-medium ${
               toneClass[c.status] ?? toneClass.completed
             }`}
           >
             {statusLabels[c.status] ?? c.status}
+          </span>
+          <span className="font-mono text-[10px] text-muted-foreground">
+            {relative(c.reported_at)}
           </span>
         </span>
         <span className="mt-1 block truncate font-medium text-ink group-hover:text-primary">
@@ -90,7 +124,7 @@ function JobRow({ c }: { c: MaintenanceCase }) {
           {c.property_address} · {c.tenant_name}
         </span>
       </span>
-      <span className="shrink-0">
+      <span className="shrink-0 pt-0.5">
         <UrgencyBadge urgency={c.urgency} />
       </span>
     </Link>
@@ -98,159 +132,89 @@ function JobRow({ c }: { c: MaintenanceCase }) {
 }
 
 function Dashboard() {
+  useCasesRealtime();
   const { data: cases } = useSuspenseQuery(casesQuery);
 
-  const open = cases.filter((c) => c.status !== "completed");
-  const attention = cases.filter((c) => c.status === "needs_attention");
-  const inProgress = cases.filter((c) => c.status === "in_progress");
-  const completed = cases.filter((c) => c.status === "completed");
-  const stale = attention.filter((c) => hoursSince(c.updated_at) > 24).length;
-  const critical = open.filter((c) => c.urgency === "critical" || c.urgency === "high").length;
+  const active = cases.filter((c) => c.status !== "completed");
+  const emergency = active.filter((c) => c.urgency === "critical");
+  const awaiting = cases.filter((c) => c.status === "needs_attention");
 
-  const resolutionDays = completed.length
-    ? completed.reduce(
+  const responded = cases.filter((c) => c.status !== "needs_attention");
+  const avgHours = responded.length
+    ? responded.reduce(
         (sum, c) =>
-          sum + (new Date(c.updated_at).getTime() - new Date(c.reported_at).getTime()) / 86_400_000,
+          sum + (new Date(c.updated_at).getTime() - new Date(c.reported_at).getTime()) / 3_600_000,
         0,
-      ) / completed.length
+      ) / responded.length
     : null;
+  const avgLabel =
+    avgHours == null
+      ? "—"
+      : avgHours < 1
+        ? `${Math.max(1, Math.round(avgHours * 60))}m`
+        : `${avgHours.toFixed(1)}h`;
 
-  const total = cases.length || 1;
-  const flow = [
-    { label: "Needs attention", value: Math.round((attention.length / total) * 100) },
-    { label: "In progress", value: Math.round((inProgress.length / total) * 100) },
-    { label: "Completed", value: Math.round((completed.length / total) * 100) },
-  ];
-
-  const priority = [...attention, ...inProgress].slice(0, 8);
-
-  const activity = [...cases]
-    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-    .slice(0, 6);
+  const latest = [...cases]
+    .sort((a, b) => new Date(b.reported_at).getTime() - new Date(a.reported_at).getTime())
+    .slice(0, 10);
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
-      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Overview</h1>
-          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-            {cases.length === 0
-              ? "No maintenance cases have reached Ovelo yet. New tenant reports appear here automatically."
-              : `${attention.length} case${attention.length === 1 ? "" : "s"} need a decision from your team. Everything else is being handled.`}
-          </p>
-        </div>
-        <Link
-          to="/cases"
-          className="rounded-md border border-input px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:bg-brand-tint"
-        >
-          All cases
-        </Link>
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
+      <header className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Overview</h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Live maintenance operations across your portfolio. Updates arrive automatically as cases
+          are logged and handled.
+        </p>
       </header>
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Active jobs"
-          value={String(open.length)}
-          delta={`${critical} high or critical urgency`}
+          label="Active cases"
+          value={String(active.length)}
+          note="Open and not yet completed"
+          icon={ClipboardList}
         />
         <StatCard
-          label="Awaiting approval"
-          value={String(attention.length)}
-          delta={stale > 0 ? `${stale} waiting over 24h` : "Nothing overdue"}
+          label="Emergency cases"
+          value={String(emergency.length)}
+          note="Critical urgency, still open"
+          icon={AlertTriangle}
+          emphasis={emergency.length > 0}
         />
         <StatCard
-          label="Average resolution time"
-          value={resolutionDays === null ? "—" : `${resolutionDays.toFixed(1)} days`}
-          delta={completed.length ? `Across ${completed.length} resolved` : "No resolved cases yet"}
+          label="Awaiting review"
+          value={String(awaiting.length)}
+          note="Needs a human decision"
+          icon={Inbox}
         />
         <StatCard
-          label="In progress"
-          value={String(inProgress.length)}
-          delta="Handled by Ovelo, no action needed"
+          label="Average response time"
+          value={avgLabel}
+          note="Logged to first handling"
+          icon={Clock}
         />
-      </div>
+      </section>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="overflow-hidden rounded-lg border border-border bg-surface">
-          <div className="flex items-center justify-between border-b border-border px-5 py-3">
-            <h2 className="text-sm font-semibold tracking-tight text-ink">
-              Active maintenance jobs
-            </h2>
-            <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-              {open.length} open
-            </span>
-          </div>
-          {priority.length === 0 ? (
-            <div className="px-5 py-10">
-              <p className="text-sm font-medium text-ink">No live cases right now</p>
-              <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">
-                Cases appear here the moment a tenant reports an issue through your channels. Ovelo
-                triages, assigns a contractor and only escalates what needs a human decision.
-              </p>
-              <Link
-                to="/cases"
-                className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
-              >
-                Open the case list
-              </Link>
-            </div>
-          ) : (
-            priority.map((c) => <JobRow key={c.id} c={c} />)
-          )}
-        </section>
-
-        <div className="space-y-4">
-        <section className="rounded-lg border border-border bg-surface p-5">
-          <h2 className="text-sm font-semibold tracking-tight text-ink">Case flow</h2>
-          <div className="mt-4 space-y-3">
-            {flow.map((b) => (
-              <div key={b.label}>
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">{b.label}</span>
-                  <span className="font-mono text-[11px] text-ink">{b.value}%</span>
-                </div>
-                <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${b.value}%` }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <aside className="overflow-hidden rounded-lg border border-border bg-surface">
-          <div className="border-b border-border px-5 py-3">
-            <h2 className="text-sm font-semibold tracking-tight text-ink">Recent activity</h2>
-          </div>
-          {activity.length === 0 ? (
-            <p className="px-5 py-8 text-sm text-muted-foreground">
-              Activity from calls, contractor updates and tenant messages will stream in here.
-            </p>
-          ) : (
-            <ul className="divide-y divide-border">
-              {activity.map((c) => (
-                <li key={c.id} className="px-5 py-3.5">
-                  <Link
-                    to="/cases/$caseId"
-                    params={{ caseId: c.id }}
-                    className="group flex items-start gap-2.5"
-                  >
-                    <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />
-                    <span className="min-w-0">
-                      <span className="block text-sm text-ink group-hover:text-primary">
-                        {c.last_ai_action ?? `Case updated — ${c.issue_category}`}
-                      </span>
-                      <span className="mt-1 block font-mono text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                        {c.reference_code} · {relative(c.updated_at)}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </aside>
+      <section className="mt-8 overflow-hidden rounded-lg border border-border bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3.5">
+          <h2 className="text-sm font-semibold text-ink">Latest maintenance cases</h2>
+          <Link to="/cases" className="text-xs font-medium text-primary hover:underline">
+            View all
+          </Link>
         </div>
-      </div>
+        {latest.length === 0 ? (
+          <div className="px-5 py-14 text-center">
+            <p className="text-sm font-medium text-ink">No maintenance cases yet</p>
+            <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+              Cases appear here the moment they are written to your maintenance case records. This
+              view is live — nothing needs refreshing.
+            </p>
+          </div>
+        ) : (
+          latest.map((c) => <CaseRow key={c.id} c={c} />)
+        )}
+      </section>
     </div>
   );
 }
