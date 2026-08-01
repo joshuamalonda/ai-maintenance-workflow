@@ -59,7 +59,7 @@ export type Database = {
           priority?: string | null
           property_address: string
           recommended_action?: string | null
-          reference_code: string
+          reference_code?: string
           reported_at?: string
           source_channel?: string
           status?: string
@@ -132,6 +132,7 @@ export type Database = {
         Returns: boolean
       }
       is_console_user: { Args: { _user_id: string }; Returns: boolean }
+      next_case_reference: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "staff"
