@@ -100,13 +100,12 @@ export async function fetchConversationTranscript(
       delay *= 2;
     }
     try {
-      const response = await fetch(
-        `${TELNYX_API}/ai/conversations/${encodeURIComponent(conversationId)}/messages`,
-        { headers: { Authorization: `Bearer ${apiKey}` } },
-      );
-      if (!response.ok) continue;
-      const payload = (await response.json()) as { data?: TelnyxMessage[] };
-      const transcript = flattenMessages(payload.data ?? []);
+      const { fetchAllConversationMessages } = await import("@/lib/telnyx-enrich.server");
+      const messages = (await fetchAllConversationMessages(
+        conversationId,
+        apiKey,
+      )) as TelnyxMessage[];
+      const transcript = flattenMessages(messages);
       if (transcript) return transcript;
     } catch (error) {
       console.error("[telnyx] transcript fetch error", error);
