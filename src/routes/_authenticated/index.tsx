@@ -114,7 +114,7 @@ function CaseRow({ c }: { c: MaintenanceCase }) {
             {statusLabels[c.status] ?? c.status}
           </span>
           <span className="font-mono text-[10px] text-muted-foreground">
-            {relative(c.reported_at)}
+            {relative(c.created_at)}
           </span>
         </span>
         <span className="mt-1 block truncate font-medium text-ink group-hover:text-primary">
@@ -143,7 +143,7 @@ function Dashboard() {
   const avgHours = responded.length
     ? responded.reduce(
         (sum, c) =>
-          sum + (new Date(c.updated_at).getTime() - new Date(c.reported_at).getTime()) / 3_600_000,
+          sum + (new Date(c.updated_at).getTime() - new Date(c.created_at).getTime()) / 3_600_000,
         0,
       ) / responded.length
     : null;
@@ -155,7 +155,7 @@ function Dashboard() {
         : `${avgHours.toFixed(1)}h`;
 
   const latest = [...cases]
-    .sort((a, b) => new Date(b.reported_at).getTime() - new Date(a.reported_at).getTime())
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 10);
 
   return (

@@ -53,7 +53,8 @@ const caseSchema = z.object({
   ai_confidence: z.number().min(0).max(1).nullish(),
   last_ai_action: z.string().max(2000).nullish(),
   source_channel: z.string().max(50).default("email"),
-  reported_at: z.string().datetime().optional(),
+  // reported_at intentionally not accepted: the database created_at timestamp
+  // is the source of truth for when a case was reported.
   preferred_language: z.string().max(100).nullish(),
   priority: z.string().max(50).nullish(),
   contractor_required: z.boolean().nullish(),

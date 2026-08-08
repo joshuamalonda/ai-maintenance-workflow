@@ -57,7 +57,7 @@ function CasesPage() {
       .sort((a, b) =>
         sort === "urgency"
           ? (urgencyRank[a.urgency] ?? 9) - (urgencyRank[b.urgency] ?? 9)
-          : new Date(b.reported_at).getTime() - new Date(a.reported_at).getTime(),
+          : new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
   }, [cases, query, status, sort]);
 

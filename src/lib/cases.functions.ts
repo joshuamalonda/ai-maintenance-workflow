@@ -15,7 +15,7 @@ export const listCases = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("maintenance_cases")
       .select(CASE_COLUMNS)
-      .order("reported_at", { ascending: false });
+      .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return (data ?? []) as MaintenanceCase[];
   });
