@@ -18,7 +18,7 @@ const TIME_WINDOW_MS = 30 * 60 * 1000;
 
 type CaseRow = {
   id: string;
-  reported_at: string;
+
   created_at: string;
   caller_number: string | null;
   call_control_id: string | null;
@@ -114,7 +114,7 @@ function scoreConversation(row: CaseRow, conversation: Conversation): number | n
   const started = conversation.created_at ?? conversation.last_message_at;
   if (!started) return null;
   const delta = Math.abs(
-    new Date(row.reported_at ?? row.created_at).getTime() - new Date(started).getTime(),
+    new Date(row.created_at).getTime() - new Date(started).getTime(),
   );
   if (delta > TIME_WINDOW_MS) return null;
 
@@ -142,7 +142,7 @@ function pickRecording(row: CaseRow, recordings: Recording[]): Recording | null 
   );
   if (byId) return byId;
 
-  const target = new Date(row.reported_at ?? row.created_at).getTime();
+  const target = new Date(row.created_at).getTime();
   let best: { rec: Recording; delta: number } | null = null;
   for (const rec of recordings) {
     const started = rec.recording_started_at ?? rec.created_at;
@@ -173,7 +173,7 @@ export async function runEnrichment(apiKey: string): Promise<EnrichmentSummary> 
   const { data: cases, error } = await supabaseAdmin
     .from("maintenance_cases")
     .select(
-      "id, reported_at, created_at, caller_number, call_control_id, call_leg_id, conversation_id, transcript, call_duration_secs, call_recording_url, recording_storage_path, enrichment_attempts",
+      "id, created_at, caller_number, call_control_id, call_leg_id, conversation_id, transcript, call_duration_secs, call_recording_url, recording_storage_path, enrichment_attempts",
     )
     .eq("enrichment_status", "pending")
     .lt("enrichment_attempts", MAX_ATTEMPTS)
