@@ -224,7 +224,7 @@ function CaseDetail() {
               {data.conversation_id && (
                 <Field label="Conversation ID" value={data.conversation_id} />
               )}
-              <Field label="Reported" value={new Date(data.reported_at).toLocaleString("en-GB")} />
+              <Field label="Reported" value={new Date(data.created_at).toLocaleString("en-GB")} />
               <Field label="Created at" value={new Date(data.created_at).toLocaleString("en-GB")} />
               <Field
                 label="Last updated"
