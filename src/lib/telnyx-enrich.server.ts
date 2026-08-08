@@ -94,6 +94,40 @@ type TelnyxMessage = {
 };
 
 /** Keeps only real tenant/assistant turns, ordered oldest -> newest. */
+/**
+ * The Telnyx messages endpoint is paginated (20 per page by default) and
+ * returns messages newest-first, so we must walk every page via
+ * `meta.total_pages` before sorting oldest -> newest.
+ */
+export async function fetchAllConversationMessages(
+  conversationId: string,
+  apiKey: string,
+): Promise<TelnyxMessage[]> {
+  const base = `${TELNYX_API}/ai/conversations/${encodeURIComponent(conversationId)}/messages`;
+  const all: TelnyxMessage[] = [];
+  let page = 1;
+  let totalPages = 1;
+  while (page <= totalPages && page <= 50) {
+    try {
+      const response = await fetch(`${base}?page[size]=100&page[number]=${page}`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      if (!response.ok) break;
+      const payload = (await response.json()) as {
+        data?: TelnyxMessage[];
+        meta?: { total_pages?: number | null };
+      };
+      all.push(...(payload.data ?? []));
+      totalPages = payload.meta?.total_pages ?? 1;
+    } catch (error) {
+      console.error("[enrich] telnyx messages fetch error", error);
+      break;
+    }
+    page += 1;
+  }
+  return all;
+}
+
 export function conversationTurns(messages: TelnyxMessage[]): TelnyxMessage[] {
   return messages
     .filter((m) => {
@@ -114,10 +148,7 @@ export function conversationTurns(messages: TelnyxMessage[]): TelnyxMessage[] {
 }
 
 async function fetchTranscript(conversationId: string, apiKey: string): Promise<string | null> {
-  const messages = await telnyxGet<TelnyxMessage>(
-    `/ai/conversations/${encodeURIComponent(conversationId)}/messages`,
-    apiKey,
-  );
+  const messages = await fetchAllConversationMessages(conversationId, apiKey);
   const text = conversationTurns(messages)
     .map((m) => {
       const who = (m.role ?? m.sender ?? "unknown").toLowerCase();
