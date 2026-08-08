@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           ai_confidence: number | null
           ai_summary: string | null
+          call_control_id: string | null
           call_duration_secs: number | null
           call_recording_url: string | null
           call_sid: string | null
@@ -46,6 +47,7 @@ export type Database = {
         Insert: {
           ai_confidence?: number | null
           ai_summary?: string | null
+          call_control_id?: string | null
           call_duration_secs?: number | null
           call_recording_url?: string | null
           call_sid?: string | null
@@ -74,6 +76,7 @@ export type Database = {
         Update: {
           ai_confidence?: number | null
           ai_summary?: string | null
+          call_control_id?: string | null
           call_duration_secs?: number | null
           call_recording_url?: string | null
           call_sid?: string | null
