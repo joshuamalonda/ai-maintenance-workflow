@@ -63,6 +63,7 @@ const caseSchema = z.object({
   transcript: transcriptField,
   conversation_id: z.string().max(200).nullish(),
   call_sid: z.string().max(200).nullish(),
+  call_control_id: z.string().max(200).nullish(),
   call_duration_secs: z.number().int().min(0).max(86400).nullish(),
   call_recording_url: z.string().url().max(2000).nullish(),
 });

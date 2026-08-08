@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedCasesIndexRouteImport } from './routes/_authenticated/cases.index'
+import { Route as ApiPublicTelnyxEventsRouteImport } from './routes/api/public/telnyx-events'
 import { Route as ApiPublicCasesRouteImport } from './routes/api/public/cases'
 import { Route as AuthenticatedCasesCaseIdRouteImport } from './routes/_authenticated/cases.$caseId'
 
@@ -41,6 +42,11 @@ const AuthenticatedCasesIndexRoute = AuthenticatedCasesIndexRouteImport.update({
   path: '/cases/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicTelnyxEventsRoute = ApiPublicTelnyxEventsRouteImport.update({
+  id: '/api/public/telnyx-events',
+  path: '/api/public/telnyx-events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCasesRoute = ApiPublicCasesRouteImport.update({
   id: '/api/public/cases',
   path: '/api/public/cases',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
+  '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/cases/': typeof AuthenticatedCasesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
+  '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/cases': typeof AuthenticatedCasesIndexRoute
 }
 export interface FileRoutesById {
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
+  '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/_authenticated/cases/': typeof AuthenticatedCasesIndexRoute
 }
 export interface FileRouteTypes {
@@ -87,6 +96,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/cases/$caseId'
     | '/api/public/cases'
+    | '/api/public/telnyx-events'
     | '/cases/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -95,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cases/$caseId'
     | '/api/public/cases'
+    | '/api/public/telnyx-events'
     | '/cases'
   id:
     | '__root__'
@@ -104,6 +115,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/cases/$caseId'
     | '/api/public/cases'
+    | '/api/public/telnyx-events'
     | '/_authenticated/cases/'
   fileRoutesById: FileRoutesById
 }
@@ -112,6 +124,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicCasesRoute: typeof ApiPublicCasesRoute
+  ApiPublicTelnyxEventsRoute: typeof ApiPublicTelnyxEventsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -151,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCasesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/telnyx-events': {
+      id: '/api/public/telnyx-events'
+      path: '/api/public/telnyx-events'
+      fullPath: '/api/public/telnyx-events'
+      preLoaderRoute: typeof ApiPublicTelnyxEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cases': {
       id: '/api/public/cases'
       path: '/api/public/cases'
@@ -188,17 +208,8 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicCasesRoute: ApiPublicCasesRoute,
+  ApiPublicTelnyxEventsRoute: ApiPublicTelnyxEventsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

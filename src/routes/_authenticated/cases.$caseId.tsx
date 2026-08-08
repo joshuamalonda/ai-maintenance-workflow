@@ -1,8 +1,8 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
-import { getCase } from "@/lib/cases.functions";
+import { getCase, getRecordingUrl } from "@/lib/cases.functions";
 import { CategoryTag, StatusBadge, UrgencyBadge, statusLabels } from "@/components/case-badges";
 import { useCasesRealtime } from "@/hooks/use-cases-realtime";
 
@@ -10,6 +10,14 @@ const caseQuery = (id: string) =>
   queryOptions({
     queryKey: ["maintenance_cases", id],
     queryFn: () => getCase({ data: { id } }),
+  });
+
+const recordingQuery = (id: string, hasRecording: boolean) =>
+  queryOptions({
+    queryKey: ["maintenance_cases", id, "recording"],
+    queryFn: () => getRecordingUrl({ data: { id } }),
+    enabled: hasRecording,
+    staleTime: 30 * 60 * 1000,
   });
 
 export const Route = createFileRoute("/_authenticated/cases/$caseId")({
@@ -86,6 +94,9 @@ function CaseDetail() {
   useCasesRealtime();
   const { caseId } = Route.useParams();
   const { data } = useSuspenseQuery(caseQuery(caseId));
+  const { data: recordingUrl } = useQuery(
+    recordingQuery(caseId, Boolean(data?.call_recording_url)),
+  );
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   if (!data) return <Fallback title="Case not found" />;
 
@@ -132,14 +143,13 @@ function CaseDetail() {
 
           <Panel title="Call recording">
             {data.call_recording_url ? (
-              <audio
-                controls
-                preload="none"
-                src={data.call_recording_url}
-                className="w-full"
-              >
-                Your browser does not support the audio element.
-              </audio>
+              recordingUrl ? (
+                <audio controls preload="none" src={recordingUrl} className="w-full">
+                  Your browser does not support the audio element.
+                </audio>
+              ) : (
+                "Preparing recording…"
+              )
             ) : (
               "No recording available."
             )}
