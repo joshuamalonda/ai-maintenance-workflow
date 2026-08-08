@@ -188,12 +188,6 @@ function Dashboard() {
           note="Needs a human decision"
           icon={Inbox}
         />
-        <StatCard
-          label="Average response time"
-          value={avgLabel}
-          note="Logged to first handling"
-          icon={Clock}
-        />
       </section>
 
       <section className="mt-8 overflow-hidden rounded-lg border border-border bg-surface">
