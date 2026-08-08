@@ -1,0 +1,1 @@
+UPDATE public.maintenance_cases SET transcript = NULL, enrichment_status = 'pending', enrichment_attempts = 0 WHERE reference_code = 'MC-000006';
