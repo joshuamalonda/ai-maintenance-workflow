@@ -5,6 +5,7 @@ import { ChevronDown } from "lucide-react";
 import { getCase, getRecordingUrl } from "@/lib/cases.functions";
 import { CategoryTag, StatusBadge, UrgencyBadge, statusLabels } from "@/components/case-badges";
 import { useCasesRealtime } from "@/hooks/use-cases-realtime";
+import { DeleteCaseButton } from "@/components/delete-case-button";
 
 const caseQuery = (id: string) =>
   queryOptions({
@@ -117,6 +118,12 @@ function CaseDetail() {
         <div className="flex flex-wrap items-center gap-2">
           <UrgencyBadge urgency={data.urgency} />
           <StatusBadge status={data.status} />
+          <DeleteCaseButton
+            caseId={data.id}
+            reference={data.reference_code}
+            variant="button"
+            redirectToList
+          />
         </div>
       </header>
 
