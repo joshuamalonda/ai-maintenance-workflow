@@ -20,11 +20,16 @@ export type Database = {
           ai_summary: string | null
           call_control_id: string | null
           call_duration_secs: number | null
+          call_leg_id: string | null
           call_recording_url: string | null
           call_sid: string | null
+          caller_number: string | null
           contractor_required: boolean | null
           conversation_id: string | null
           created_at: string
+          enrichment_attempts: number
+          enrichment_last_checked_at: string | null
+          enrichment_status: string
           id: string
           issue_category: string
           issue_description: string
@@ -34,6 +39,7 @@ export type Database = {
           priority: string | null
           property_address: string
           recommended_action: string | null
+          recording_storage_path: string | null
           reference_code: string
           reported_at: string
           source_channel: string
@@ -49,11 +55,16 @@ export type Database = {
           ai_summary?: string | null
           call_control_id?: string | null
           call_duration_secs?: number | null
+          call_leg_id?: string | null
           call_recording_url?: string | null
           call_sid?: string | null
+          caller_number?: string | null
           contractor_required?: boolean | null
           conversation_id?: string | null
           created_at?: string
+          enrichment_attempts?: number
+          enrichment_last_checked_at?: string | null
+          enrichment_status?: string
           id?: string
           issue_category: string
           issue_description: string
@@ -63,6 +74,7 @@ export type Database = {
           priority?: string | null
           property_address: string
           recommended_action?: string | null
+          recording_storage_path?: string | null
           reference_code?: string
           reported_at?: string
           source_channel?: string
@@ -78,11 +90,16 @@ export type Database = {
           ai_summary?: string | null
           call_control_id?: string | null
           call_duration_secs?: number | null
+          call_leg_id?: string | null
           call_recording_url?: string | null
           call_sid?: string | null
+          caller_number?: string | null
           contractor_required?: boolean | null
           conversation_id?: string | null
           created_at?: string
+          enrichment_attempts?: number
+          enrichment_last_checked_at?: string | null
+          enrichment_status?: string
           id?: string
           issue_category?: string
           issue_description?: string
@@ -92,6 +109,7 @@ export type Database = {
           priority?: string | null
           property_address?: string
           recommended_action?: string | null
+          recording_storage_path?: string | null
           reference_code?: string
           reported_at?: string
           source_channel?: string

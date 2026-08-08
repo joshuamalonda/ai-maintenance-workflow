@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedCasesIndexRouteImport } from './routes/_authenticated/cases.index'
 import { Route as ApiPublicTelnyxEventsRouteImport } from './routes/api/public/telnyx-events'
+import { Route as ApiPublicEnrichCallsRouteImport } from './routes/api/public/enrich-calls'
 import { Route as ApiPublicCasesRouteImport } from './routes/api/public/cases'
 import { Route as AuthenticatedCasesCaseIdRouteImport } from './routes/_authenticated/cases.$caseId'
 
@@ -47,6 +48,11 @@ const ApiPublicTelnyxEventsRoute = ApiPublicTelnyxEventsRouteImport.update({
   path: '/api/public/telnyx-events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicEnrichCallsRoute = ApiPublicEnrichCallsRouteImport.update({
+  id: '/api/public/enrich-calls',
+  path: '/api/public/enrich-calls',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicCasesRoute = ApiPublicCasesRouteImport.update({
   id: '/api/public/cases',
   path: '/api/public/cases',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
+  '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/cases/': typeof AuthenticatedCasesIndexRoute
 }
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedIndexRoute
   '/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
+  '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/cases': typeof AuthenticatedCasesIndexRoute
 }
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
+  '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/_authenticated/cases/': typeof AuthenticatedCasesIndexRoute
 }
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/cases/$caseId'
     | '/api/public/cases'
+    | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
     | '/cases/'
   fileRoutesByTo: FileRoutesByTo
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/'
     | '/cases/$caseId'
     | '/api/public/cases'
+    | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
     | '/cases'
   id:
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/_authenticated/'
     | '/_authenticated/cases/$caseId'
     | '/api/public/cases'
+    | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
     | '/_authenticated/cases/'
   fileRoutesById: FileRoutesById
@@ -124,6 +136,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicCasesRoute: typeof ApiPublicCasesRoute
+  ApiPublicEnrichCallsRoute: typeof ApiPublicEnrichCallsRoute
   ApiPublicTelnyxEventsRoute: typeof ApiPublicTelnyxEventsRoute
 }
 
@@ -171,6 +184,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicTelnyxEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/enrich-calls': {
+      id: '/api/public/enrich-calls'
+      path: '/api/public/enrich-calls'
+      fullPath: '/api/public/enrich-calls'
+      preLoaderRoute: typeof ApiPublicEnrichCallsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/cases': {
       id: '/api/public/cases'
       path: '/api/public/cases'
@@ -208,18 +228,9 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicCasesRoute: ApiPublicCasesRoute,
+  ApiPublicEnrichCallsRoute: ApiPublicEnrichCallsRoute,
   ApiPublicTelnyxEventsRoute: ApiPublicTelnyxEventsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
