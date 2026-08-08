@@ -33,6 +33,18 @@ export const getCase = createServerFn({ method: "GET" })
     return (row ?? null) as MaintenanceCase | null;
   });
 
+export const deleteCase = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("maintenance_cases")
+      .delete()
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { id: data.id };
+  });
+
 /**
  * Resolves a playable URL for a case recording. Recordings mirrored into
  * durable storage are referenced as `storage:<bucket>/<path>` and need a
