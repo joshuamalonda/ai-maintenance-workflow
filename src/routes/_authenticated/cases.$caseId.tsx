@@ -6,6 +6,7 @@ import { getCase, getRecordingUrl } from "@/lib/cases.functions";
 import { CategoryTag, StatusBadge, UrgencyBadge, statusLabels } from "@/components/case-badges";
 import { useCasesRealtime } from "@/hooks/use-cases-realtime";
 import { DeleteCaseButton } from "@/components/delete-case-button";
+import { TranscriptView } from "@/components/transcript-view";
 
 const caseQuery = (id: string) =>
   queryOptions({
@@ -191,7 +192,7 @@ function CaseDetail() {
             {transcriptOpen && (
               <div className="border-t border-border px-5 py-4 text-sm leading-relaxed text-muted-foreground">
                 {data.transcript ? (
-                  <p className="whitespace-pre-wrap">{data.transcript}</p>
+                  <TranscriptView transcript={data.transcript} />
                 ) : (
                   "No transcript is stored for this case."
                 )}
