@@ -114,10 +114,7 @@ export function conversationTurns(messages: TelnyxMessage[]): TelnyxMessage[] {
 }
 
 async function fetchTranscript(conversationId: string, apiKey: string): Promise<string | null> {
-  const messages = await telnyxGet<TelnyxMessage>(
-    `/ai/conversations/${encodeURIComponent(conversationId)}/messages`,
-    apiKey,
-  );
+  const messages = await fetchAllConversationMessages(conversationId, apiKey);
   const text = conversationTurns(messages)
     .map((m) => {
       const who = (m.role ?? m.sender ?? "unknown").toLowerCase();
