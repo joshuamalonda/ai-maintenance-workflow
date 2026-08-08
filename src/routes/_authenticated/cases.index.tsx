@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useCasesRealtime } from "@/hooks/use-cases-realtime";
 import { listCases } from "@/lib/cases.functions";
 import { CategoryTag, StatusBadge, UrgencyBadge, statusLabels } from "@/components/case-badges";
+import { DeleteCaseButton } from "@/components/delete-case-button";
 
 const casesQuery = queryOptions({
   queryKey: ["maintenance_cases"],
@@ -99,12 +100,13 @@ function CasesPage() {
       </div>
 
       <div className="overflow-hidden rounded-md border border-border bg-surface">
-        <div className="hidden grid-cols-[7rem_1.1fr_1.4fr_9rem_8rem] gap-3 border-b border-border bg-secondary px-5 py-2.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:grid">
+        <div className="hidden grid-cols-[7rem_1.1fr_1.4fr_9rem_8rem_2.5rem] gap-3 border-b border-border bg-secondary px-5 py-2.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground lg:grid">
           <span>Reference</span>
           <span>Tenant</span>
           <span>Property</span>
           <span>Urgency</span>
           <span>Status</span>
+          <span className="sr-only">Actions</span>
         </div>
         {rows.length === 0 ? (
           <div className="px-5 py-10">
@@ -130,11 +132,14 @@ function CasesPage() {
           </div>
         ) : (
           rows.map((c) => (
-            <Link
+            <div
               key={c.id}
+              className="flex items-center gap-2 border-b border-border pr-3 transition-colors last:border-b-0 hover:bg-brand-tint"
+            >
+            <Link
               to="/cases/$caseId"
               params={{ caseId: c.id }}
-              className="grid gap-2 border-b border-border px-5 py-3.5 text-sm transition-colors last:border-b-0 hover:bg-brand-tint lg:grid-cols-[7rem_1.1fr_1.4fr_9rem_8rem] lg:items-center lg:gap-3"
+              className="grid min-w-0 flex-1 gap-2 px-5 py-3.5 text-sm lg:grid-cols-[7rem_1.1fr_1.4fr_9rem_8rem] lg:items-center lg:gap-3"
             >
               <span className="font-mono text-[11px] text-muted-foreground">
                 {c.reference_code}
@@ -153,6 +158,8 @@ function CasesPage() {
                 <StatusBadge status={c.status} />
               </span>
             </Link>
+              <DeleteCaseButton caseId={c.id} reference={c.reference_code} />
+            </div>
           ))
         )}
       </div>
