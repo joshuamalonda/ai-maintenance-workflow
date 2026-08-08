@@ -14,6 +14,33 @@ const json = (body: unknown, status = 200) =>
     headers: { "Content-Type": "application/json", ...corsHeaders },
   });
 
+const transcriptTurn = z.object({
+  role: z.string().max(50).optional(),
+  speaker: z.string().max(50).optional(),
+  message: z.string().optional(),
+  text: z.string().optional(),
+  content: z.string().optional(),
+});
+
+// Accepts either a plain transcript string or a structured turn array
+// (ElevenLabs / Telnyx conversation format) which is flattened to text.
+const transcriptField = z
+  .union([z.string().max(100000), z.array(transcriptTurn).max(2000)])
+  .nullish()
+  .transform((value) => {
+    if (value == null) return value;
+    if (typeof value === "string") return value;
+    return value
+      .map((turn) => {
+        const who = turn.role ?? turn.speaker ?? "unknown";
+        const said = turn.message ?? turn.text ?? turn.content ?? "";
+        return `${who}: ${said}`.trim();
+      })
+      .filter((line) => line.length > 0)
+      .join("\n")
+      .slice(0, 100000);
+  });
+
 const caseSchema = z.object({
   reference_code: z.string().min(1).max(64).optional(),
   tenant_name: z.string().min(1).max(200),
@@ -33,7 +60,7 @@ const caseSchema = z.object({
   recommended_action: z.string().max(5000).nullish(),
   troubleshooting: z.string().max(5000).nullish(),
   missing_information: z.string().max(5000).nullish(),
-  transcript: z.string().max(100000).nullish(),
+  transcript: transcriptField,
   conversation_id: z.string().max(200).nullish(),
   call_sid: z.string().max(200).nullish(),
   call_duration_secs: z.number().int().min(0).max(86400).nullish(),
