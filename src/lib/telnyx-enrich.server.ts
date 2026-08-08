@@ -81,16 +81,46 @@ async function telnyxGet<T>(path: string, apiKey: string): Promise<T[]> {
   }
 }
 
-type TelnyxMessage = { role?: string | null; content?: string | null; text?: string | null };
+type TelnyxMessage = {
+  role?: string | null;
+  sender?: string | null;
+  content?: string | null;
+  text?: string | null;
+  created_at?: string | null;
+  sent_at?: string | null;
+  timestamp?: string | null;
+  tool_calls?: unknown;
+  tool_call_id?: string | null;
+};
+
+/** Keeps only real tenant/assistant turns, ordered oldest -> newest. */
+export function conversationTurns(messages: TelnyxMessage[]): TelnyxMessage[] {
+  return messages
+    .filter((m) => {
+      const role = (m.role ?? m.sender ?? "").toLowerCase();
+      if (role !== "user" && role !== "assistant") return false;
+      if (m.tool_call_id) return false;
+      if (Array.isArray(m.tool_calls) && m.tool_calls.length > 0) return false;
+      return Boolean((m.content ?? m.text ?? "").trim());
+    })
+    .map((m, index) => ({ m, index }))
+    .sort((a, b) => {
+      const ta = Date.parse(a.m.created_at ?? a.m.sent_at ?? a.m.timestamp ?? "");
+      const tb = Date.parse(b.m.created_at ?? b.m.sent_at ?? b.m.timestamp ?? "");
+      if (Number.isFinite(ta) && Number.isFinite(tb) && ta !== tb) return ta - tb;
+      return a.index - b.index;
+    })
+    .map((entry) => entry.m);
+}
 
 async function fetchTranscript(conversationId: string, apiKey: string): Promise<string | null> {
   const messages = await telnyxGet<TelnyxMessage>(
     `/ai/conversations/${encodeURIComponent(conversationId)}/messages`,
     apiKey,
   );
-  const text = messages
+  const text = conversationTurns(messages)
     .map((m) => {
-      const who = m.role ?? "unknown";
+      const who = (m.role ?? m.sender ?? "unknown").toLowerCase();
       const said = (m.content ?? m.text ?? "").trim();
       return said ? `${who}: ${said}` : "";
     })
