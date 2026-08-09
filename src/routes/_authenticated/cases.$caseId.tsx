@@ -192,7 +192,7 @@ function CaseDetail() {
             {transcriptOpen && (
               <div className="border-t border-border px-5 py-4 text-sm leading-relaxed text-muted-foreground">
                 {data.transcript ? (
-                  <TranscriptView transcript={data.transcript} />
+                  <TranscriptView transcript={data.transcript} tenantName={data.tenant_name} />
                 ) : (
                   "No transcript is stored for this case."
                 )}
