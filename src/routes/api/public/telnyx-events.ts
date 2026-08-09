@@ -9,6 +9,7 @@ type CasePatch = {
 
 type CaseRow = {
   id: string;
+  agency_id: string;
   conversation_id: string | null;
   transcript: string | null;
   call_duration_secs: number | null;
