@@ -211,7 +211,10 @@ function CaseDetail() {
               <Field label="Urgency" value={data.urgency} />
               {data.priority && <Field label="Priority" value={data.priority} />}
               <Field label="Status" value={statusLabels[data.status] ?? data.status} />
-              <Field label="Source channel" value={data.source_channel} />
+              <Field
+                label="Channel"
+                value={data.communication_channel === "whatsapp" ? "WhatsApp" : "Phone"}
+              />
               {data.preferred_language && (
                 <Field label="Preferred language" value={data.preferred_language} />
               )}
