@@ -79,7 +79,44 @@ export const Route = createFileRoute("/api/public/cases")({
         }
 
         const { reference_code, ...rest } = parsed.data;
-        const insertPayload = reference_code ? { ...rest, reference_code } : rest;
+
+        // Channel is decided from real backend signals, never from the AI's
+        // own source_channel guess or from transcript wording.
+        const communication_channel = resolveChannel({
+          communication_channel: rest.communication_channel ?? null,
+          source_channel: rest.source_channel ?? null,
+          call_control_id: rest.call_control_id ?? null,
+          call_leg_id: rest.call_leg_id ?? null,
+          call_sid: rest.call_sid ?? null,
+          caller_number: rest.caller_number ?? null,
+          conversation_id: rest.conversation_id ?? null,
+          rawTranscript: rest.transcript,
+        });
+
+        const transcript = normaliseTranscript(rest.transcript);
+
+        const channelFields =
+          communication_channel === "whatsapp"
+            ? {
+                // Phone-only fields are never fabricated for WhatsApp.
+                call_duration_secs: null,
+                call_recording_url: null,
+                call_control_id: null,
+                call_leg_id: null,
+                call_sid: null,
+                caller_number: null,
+                enrichment_status: "not_applicable",
+              }
+            : {};
+
+        const insertPayload = {
+          ...rest,
+          transcript,
+          communication_channel,
+          source_channel: communication_channel,
+          ...channelFields,
+          ...(reference_code ? { reference_code } : {}),
+        };
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data, error } = await supabaseAdmin
