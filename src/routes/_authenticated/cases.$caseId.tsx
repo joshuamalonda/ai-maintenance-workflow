@@ -101,7 +101,7 @@ function CaseDetail() {
   const { data: recordingUrl } = useQuery(
     recordingQuery(caseId, Boolean(data?.call_recording_url)),
   );
-  const [transcriptOpen, setTranscriptOpen] = useState(false);
+  const [transcriptOpen, setTranscriptOpen] = useState(true);
   if (!data) return <Fallback title="Case not found" />;
 
   const channel = normaliseChannel(data.communication_channel);
