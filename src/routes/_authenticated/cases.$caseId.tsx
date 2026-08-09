@@ -7,6 +7,8 @@ import { CategoryTag, StatusBadge, UrgencyBadge, statusLabels } from "@/componen
 import { useCasesRealtime } from "@/hooks/use-cases-realtime";
 import { DeleteCaseButton } from "@/components/delete-case-button";
 import { TranscriptView } from "@/components/transcript-view";
+import { ChannelBadge, channelLabel, normaliseChannel } from "@/components/channel-badge";
+import { CallRecordingPlayer } from "@/components/call-recording-player";
 
 const caseQuery = (id: string) =>
   queryOptions({
@@ -102,6 +104,9 @@ function CaseDetail() {
   const [transcriptOpen, setTranscriptOpen] = useState(false);
   if (!data) return <Fallback title="Case not found" />;
 
+  const channel = normaliseChannel(data.communication_channel);
+  const isPhone = channel === "phone";
+
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
       <Link to="/cases" className="text-sm font-medium text-primary hover:underline">
@@ -117,6 +122,7 @@ function CaseDetail() {
           <p className="mt-1 text-sm text-muted-foreground">{data.property_address}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <ChannelBadge channel={channel} />
           <UrgencyBadge urgency={data.urgency} />
           <StatusBadge status={data.status} />
           <DeleteCaseButton
@@ -149,19 +155,24 @@ function CaseDetail() {
 
           <Panel title="Issue description">{data.issue_description}</Panel>
 
-          <Panel title="Call recording">
-            {data.call_recording_url ? (
-              recordingUrl ? (
-                <audio controls preload="none" src={recordingUrl} className="w-full">
-                  Your browser does not support the audio element.
-                </audio>
+          {data.call_recording_url && (
+            <Panel
+              title="Call recording"
+              aside={
+                data.call_duration_secs != null ? (
+                  <span className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                    {data.call_duration_secs}s
+                  </span>
+                ) : undefined
+              }
+            >
+              {recordingUrl ? (
+                <CallRecordingPlayer src={recordingUrl} fallbackDuration={data.call_duration_secs} />
               ) : (
                 "Preparing recording…"
-              )
-            ) : (
-              "No recording available."
-            )}
-          </Panel>
+              )}
+            </Panel>
+          )}
 
           <Panel title="Recommended action">
             {data.recommended_action ??
@@ -182,7 +193,12 @@ function CaseDetail() {
               aria-expanded={transcriptOpen}
               className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left"
             >
-              <span className="text-sm font-semibold text-ink">Transcript</span>
+              <span className="flex items-center gap-2 text-sm font-semibold text-ink">
+                Transcript
+                <span className="font-mono text-[10px] font-normal uppercase tracking-[0.16em] text-muted-foreground">
+                  {channelLabel(channel)}
+                </span>
+              </span>
               <ChevronDown
                 className={`size-4 text-muted-foreground transition-transform ${
                   transcriptOpen ? "rotate-180" : ""
@@ -192,7 +208,11 @@ function CaseDetail() {
             {transcriptOpen && (
               <div className="border-t border-border px-5 py-4 text-sm leading-relaxed text-muted-foreground">
                 {data.transcript ? (
-                  <TranscriptView transcript={data.transcript} tenantName={data.tenant_name} />
+                  <TranscriptView
+                    transcript={data.transcript}
+                    tenantName={data.tenant_name}
+                    channel={channel}
+                  />
                 ) : (
                   "No transcript is stored for this case."
                 )}
@@ -211,20 +231,17 @@ function CaseDetail() {
               <Field label="Urgency" value={data.urgency} />
               {data.priority && <Field label="Priority" value={data.priority} />}
               <Field label="Status" value={statusLabels[data.status] ?? data.status} />
-              <Field
-                label="Channel"
-                value={data.communication_channel === "whatsapp" ? "WhatsApp" : "Phone"}
-              />
+              <Field label="Channel" value={channelLabel(channel)} />
               {data.preferred_language && (
                 <Field label="Preferred language" value={data.preferred_language} />
               )}
               {data.contractor_required != null && (
                 <Field label="Contractor required" value={data.contractor_required ? "Yes" : "No"} />
               )}
-              {data.call_duration_secs != null && (
+              {isPhone && data.call_duration_secs != null && (
                 <Field label="Call duration" value={`${data.call_duration_secs}s`} />
               )}
-              {data.call_sid && <Field label="Call reference" value={data.call_sid} />}
+              {isPhone && data.call_sid && <Field label="Call reference" value={data.call_sid} />}
               {data.conversation_id && (
                 <Field label="Conversation ID" value={data.conversation_id} />
               )}
