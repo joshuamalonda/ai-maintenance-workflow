@@ -237,6 +237,8 @@ export async function runEnrichment(apiKey: string): Promise<EnrichmentSummary> 
       "id, created_at, caller_number, call_control_id, call_leg_id, conversation_id, transcript, call_duration_secs, call_recording_url, recording_storage_path, enrichment_attempts",
     )
     .eq("enrichment_status", "pending")
+    // WhatsApp cases have no Telnyx call to reconcile.
+    .eq("communication_channel", "phone")
     .lt("enrichment_attempts", MAX_ATTEMPTS)
     .gte("created_at", since)
     .order("created_at", { ascending: false })
