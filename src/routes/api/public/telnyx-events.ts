@@ -61,7 +61,7 @@ export const Route = createFileRoute("/api/public/telnyx-events")({
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
         const { data: existing } = await supabaseAdmin
           .from("maintenance_cases")
-          .select("id, conversation_id, transcript, call_duration_secs, call_recording_url")
+          .select("id, agency_id, conversation_id, transcript, call_duration_secs, call_recording_url")
           .eq("call_control_id", callControlId)
           .order("created_at", { ascending: false })
           .limit(1)
@@ -101,7 +101,14 @@ export const Route = createFileRoute("/api/public/telnyx-events")({
             | undefined;
           const source =
             urls?.["mp3"] ?? urls?.["wav"] ?? publicUrls?.["mp3"] ?? publicUrls?.["wav"] ?? null;
-          if (source) patch.call_recording_url = await mirrorRecording(source, callControlId);
+          if (source) {
+            // agency_id is read from the existing case and never overwritten.
+            patch.call_recording_url = await mirrorRecording(
+              source,
+              callControlId,
+              existing.agency_id,
+            );
+          }
         }
 
         if (Object.keys(patch).length === 0) return ok({ ok: true, unchanged: true });
