@@ -14,8 +14,112 @@ export type Database = {
   }
   public: {
     Tables: {
+      agencies: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      agency_members: {
+        Row: {
+          agency_id: string
+          created_at: string
+          id: string
+          member_role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          id?: string
+          member_role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          id?: string
+          member_role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agency_members_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_endpoints: {
+        Row: {
+          agency_id: string
+          channel: string
+          created_at: string
+          id: string
+          identifier: string
+          identifier_key: string
+          is_active: boolean
+          label: string | null
+          updated_at: string
+        }
+        Insert: {
+          agency_id: string
+          channel: string
+          created_at?: string
+          id?: string
+          identifier: string
+          identifier_key: string
+          is_active?: boolean
+          label?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agency_id?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          identifier?: string
+          identifier_key?: string
+          is_active?: boolean
+          label?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_endpoints_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       maintenance_cases: {
         Row: {
+          agency_id: string
           ai_confidence: number | null
           ai_summary: string | null
           call_control_id: string | null
@@ -52,6 +156,7 @@ export type Database = {
           urgency: string
         }
         Insert: {
+          agency_id: string
           ai_confidence?: number | null
           ai_summary?: string | null
           call_control_id?: string | null
@@ -88,6 +193,7 @@ export type Database = {
           urgency?: string
         }
         Update: {
+          agency_id?: string
           ai_confidence?: number | null
           ai_summary?: string | null
           call_control_id?: string | null
@@ -123,7 +229,15 @@ export type Database = {
           updated_at?: string
           urgency?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_cases_agency_id_fkey"
+            columns: ["agency_id"]
+            isOneToOne: false
+            referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
