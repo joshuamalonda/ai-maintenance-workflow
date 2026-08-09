@@ -52,6 +52,12 @@ const caseSchema = z.object({
   caller_number: z.string().max(50).nullish(),
   call_duration_secs: z.number().int().min(0).max(86400).nullish(),
   call_recording_url: z.string().url().max(2000).nullish(),
+  // Destination endpoint the tenant reached (Ovelo's number / WhatsApp
+  // sender), used to resolve the owning agency. Never the tenant's number.
+  destination_number: z.string().max(50).nullish(),
+  telnyx_agent_target: z.string().max(50).nullish(),
+  whatsapp_business_number: z.string().max(50).nullish(),
+  to: z.string().max(50).nullish(),
 });
 
 export const Route = createFileRoute("/api/public/cases")({
@@ -80,11 +86,58 @@ export const Route = createFileRoute("/api/public/cases")({
           return json({ error: "Validation failed", issues: parsed.error.issues }, 400);
         }
 
-        const { reference_code, source_channel: _ignoredSourceChannel, ...rest } = parsed.data;
+        const {
+          reference_code,
+          source_channel: _ignoredSourceChannel,
+          destination_number,
+          telnyx_agent_target,
+          whatsapp_business_number,
+          to,
+          ...rest
+        } = parsed.data;
+
+        // ---- Agency resolution (strict: no default tenant) ----------------
+        const { fetchTelnyxAgentTarget, resolveEndpointAgency } = await import(
+          "@/lib/agency.server"
+        );
+
+        // Prefer the server-verified Telnyx destination over anything in the
+        // payload; fall back to explicitly supplied destination fields.
+        let destination: string | null = null;
+        const telnyxKey = process.env["TELNYX_API_KEY"];
+        if (rest.call_control_id && telnyxKey) {
+          destination = await fetchTelnyxAgentTarget(rest.call_control_id, telnyxKey);
+        }
+        destination =
+          destination ??
+          telnyx_agent_target ??
+          destination_number ??
+          whatsapp_business_number ??
+          to ??
+          null;
+
+        if (!destination) {
+          return json(
+            {
+              error:
+                "Missing destination endpoint. Send the Ovelo number/WhatsApp sender the tenant contacted (destination_number).",
+            },
+            422,
+          );
+        }
+
+        const endpoint = await resolveEndpointAgency(destination);
+        if (!endpoint) {
+          return json(
+            { error: "Unknown communication endpoint", destination },
+            422,
+          );
+        }
 
         // Channel is decided from real backend signals, never from the AI's
         // own source_channel guess or from transcript wording.
-        const communication_channel = resolveChannel({
+        // The registered endpoint is the strongest signal of all.
+        const communication_channel = endpoint.channel ?? resolveChannel({
           communication_channel: rest.communication_channel ?? null,
           call_control_id: rest.call_control_id ?? null,
           call_leg_id: rest.call_leg_id ?? null,
@@ -115,6 +168,7 @@ export const Route = createFileRoute("/api/public/cases")({
           transcript,
           communication_channel,
           source_channel: communication_channel,
+          agency_id: endpoint.agencyId,
           ...channelFields,
           ...(reference_code ? { reference_code } : {}),
         };
