@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
-import { Bot, Check, Copy, User } from "lucide-react";
+import { Check, Copy, MessageCircle, Phone, User } from "lucide-react";
 import { toast } from "sonner";
+import type { Channel } from "@/components/channel-badge";
 
 export type TranscriptTurn = {
   speaker: "assistant" | "user";
@@ -49,9 +50,25 @@ function toPlainText(turns: TranscriptTurn[], tenantName: string) {
   return turns.map((t) => `${speakerLabel(t.speaker, tenantName)}: ${t.text}`).join("\n\n");
 }
 
-function Turn({ turn, tenantName }: { turn: TranscriptTurn; tenantName: string }) {
+function Turn({
+  turn,
+  tenantName,
+  channel,
+}: {
+  turn: TranscriptTurn;
+  tenantName: string;
+  channel: Channel;
+}) {
   const isTenant = turn.speaker === "user";
-  const Icon = isTenant ? User : Bot;
+  const Icon = isTenant ? User : channel === "whatsapp" ? MessageCircle : Phone;
+  const bubbleRadius =
+    channel === "whatsapp"
+      ? isTenant
+        ? "rounded-2xl rounded-br-sm"
+        : "rounded-2xl rounded-bl-sm"
+      : isTenant
+        ? "rounded-lg rounded-tr-sm"
+        : "rounded-lg rounded-tl-sm";
 
   return (
     <li className={`flex flex-col ${isTenant ? "items-end" : "items-start"}`}>
@@ -73,10 +90,10 @@ function Turn({ turn, tenantName }: { turn: TranscriptTurn; tenantName: string }
       </div>
 
       <div
-        className={`mt-1.5 max-w-[88%] rounded-lg border px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-[78%] ${
+        className={`mt-1.5 max-w-[88%] border px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-[78%] ${bubbleRadius} ${
           isTenant
-            ? "rounded-tr-sm border-border bg-secondary text-ink"
-            : "rounded-tl-sm border-primary/20 bg-brand-tint text-ink"
+            ? "border-border bg-secondary text-ink"
+            : "border-primary/20 bg-brand-tint text-ink"
         }`}
       >
         <p className="whitespace-pre-wrap break-words">{turn.text}</p>
@@ -94,9 +111,11 @@ function Turn({ turn, tenantName }: { turn: TranscriptTurn; tenantName: string }
 export function TranscriptView({
   transcript,
   tenantName,
+  channel = "phone",
 }: {
   transcript: string;
   tenantName?: string | null;
+  channel?: Channel;
 }) {
   const label = tenantName?.trim() || DEFAULT_TENANT_LABEL;
   const turns = useMemo(() => parseTranscript(transcript), [transcript]);
@@ -114,14 +133,14 @@ export function TranscriptView({
   };
 
   if (turns.length === 0) {
-    return <p className="whitespace-pre-wrap">{transcript}</p>;
+    return <p className="whitespace-pre-wrap break-words">{transcript}</p>;
   }
 
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-          {turns.length} {turns.length === 1 ? "turn" : "turns"}
+          {turns.length} {turns.length === 1 ? "message" : "messages"}
         </span>
         <button
           type="button"
@@ -133,9 +152,9 @@ export function TranscriptView({
         </button>
       </div>
 
-      <ul className="mt-4 max-h-[32rem] space-y-5 overflow-y-auto pr-1">
+      <ul className="mt-4 max-h-[32rem] space-y-5 overflow-y-auto overscroll-contain pr-1">
         {turns.map((turn, i) => (
-          <Turn key={i} turn={turn} tenantName={label} />
+          <Turn key={i} turn={turn} tenantName={label} channel={channel} />
         ))}
       </ul>
     </div>
