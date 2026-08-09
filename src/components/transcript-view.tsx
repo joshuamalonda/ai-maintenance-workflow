@@ -8,10 +8,11 @@ export type TranscriptTurn = {
   timestamp?: string;
 };
 
-const SPEAKER_LABEL: Record<TranscriptTurn["speaker"], string> = {
-  assistant: "Ovelo AI",
-  user: "Tenant",
-};
+const DEFAULT_TENANT_LABEL = "Tenant";
+
+function speakerLabel(speaker: TranscriptTurn["speaker"], tenantName: string) {
+  return speaker === "user" ? tenantName : "Ovelo AI";
+}
 
 const TURN_RE = /^\s*(assistant|user|ai|agent|tenant|caller)\s*(?:\[([^\]]+)\])?\s*:\s*/i;
 
@@ -44,11 +45,11 @@ export function parseTranscript(transcript: string): TranscriptTurn[] {
   return turns.filter((t) => t.text.length > 0);
 }
 
-function toPlainText(turns: TranscriptTurn[]) {
-  return turns.map((t) => `${SPEAKER_LABEL[t.speaker]}: ${t.text}`).join("\n\n");
+function toPlainText(turns: TranscriptTurn[], tenantName: string) {
+  return turns.map((t) => `${speakerLabel(t.speaker, tenantName)}: ${t.text}`).join("\n\n");
 }
 
-function Turn({ turn }: { turn: TranscriptTurn }) {
+function Turn({ turn, tenantName }: { turn: TranscriptTurn; tenantName: string }) {
   const isTenant = turn.speaker === "user";
   const Icon = isTenant ? User : Bot;
 
@@ -67,7 +68,7 @@ function Turn({ turn }: { turn: TranscriptTurn }) {
           <Icon className="size-3" aria-hidden />
         </span>
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-          {SPEAKER_LABEL[turn.speaker]}
+          {speakerLabel(turn.speaker, tenantName)}
         </span>
       </div>
 
@@ -90,13 +91,20 @@ function Turn({ turn }: { turn: TranscriptTurn }) {
   );
 }
 
-export function TranscriptView({ transcript }: { transcript: string }) {
+export function TranscriptView({
+  transcript,
+  tenantName,
+}: {
+  transcript: string;
+  tenantName?: string | null;
+}) {
+  const label = tenantName?.trim() || DEFAULT_TENANT_LABEL;
   const turns = useMemo(() => parseTranscript(transcript), [transcript]);
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(toPlainText(turns));
+      await navigator.clipboard.writeText(toPlainText(turns, label));
       setCopied(true);
       toast.success("Transcript copied");
       setTimeout(() => setCopied(false), 2000);
@@ -127,7 +135,7 @@ export function TranscriptView({ transcript }: { transcript: string }) {
 
       <ul className="mt-4 max-h-[32rem] space-y-5 overflow-y-auto pr-1">
         {turns.map((turn, i) => (
-          <Turn key={i} turn={turn} />
+          <Turn key={i} turn={turn} tenantName={label} />
         ))}
       </ul>
     </div>
