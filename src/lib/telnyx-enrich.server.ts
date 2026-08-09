@@ -18,7 +18,7 @@ const TIME_WINDOW_MS = 30 * 60 * 1000;
 
 type CaseRow = {
   id: string;
-
+  agency_id: string;
   created_at: string;
   caller_number: string | null;
   call_control_id: string | null;
@@ -234,7 +234,7 @@ export async function runEnrichment(apiKey: string): Promise<EnrichmentSummary> 
   const { data: cases, error } = await supabaseAdmin
     .from("maintenance_cases")
     .select(
-      "id, created_at, caller_number, call_control_id, call_leg_id, conversation_id, transcript, call_duration_secs, call_recording_url, recording_storage_path, enrichment_attempts",
+      "id, agency_id, created_at, caller_number, call_control_id, call_leg_id, conversation_id, transcript, call_duration_secs, call_recording_url, recording_storage_path, enrichment_attempts",
     )
     .eq("enrichment_status", "pending")
     // WhatsApp cases have no Telnyx call to reconcile.
@@ -299,6 +299,7 @@ export async function runEnrichment(apiKey: string): Promise<EnrichmentSummary> 
             const stored = await mirrorRecording(
               source,
               row.call_control_id ?? recording.id ?? row.id,
+              row.agency_id,
             );
             patch["call_recording_url"] = stored;
             if (stored.startsWith("storage:")) {

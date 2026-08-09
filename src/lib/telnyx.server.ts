@@ -121,13 +121,15 @@ export async function fetchConversationTranscript(
 export async function mirrorRecording(
   sourceUrl: string,
   callControlId: string,
+  agencyId: string,
 ): Promise<string> {
   try {
     const response = await fetch(sourceUrl);
     if (!response.ok) return sourceUrl;
     const bytes = new Uint8Array(await response.arrayBuffer());
     const extension = sourceUrl.includes(".wav") ? "wav" : "mp3";
-    const path = `${callControlId.replace(/[^a-zA-Z0-9_-]/g, "")}.${extension}`;
+    // Recordings are stored per agency so storage policies can isolate them.
+    const path = `${agencyId}/${callControlId.replace(/[^a-zA-Z0-9_-]/g, "")}.${extension}`;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.storage
