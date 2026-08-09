@@ -31,7 +31,9 @@ const caseSchema = z.object({
   ai_summary: z.string().max(5000).nullish(),
   ai_confidence: z.number().min(0).max(1).nullish(),
   last_ai_action: z.string().max(2000).nullish(),
-  source_channel: z.string().max(50).default("email"),
+  // Accepted for backwards compatibility with older tool payloads, but
+  // ignored: the backend alone resolves the channel from real signals.
+  source_channel: z.string().max(50).nullish(),
   // Authoritative channel. Optional: derived from real signals when absent.
   communication_channel: z.enum(["phone", "whatsapp"]).nullish(),
   // reported_at intentionally not accepted: the database created_at timestamp
@@ -78,13 +80,12 @@ export const Route = createFileRoute("/api/public/cases")({
           return json({ error: "Validation failed", issues: parsed.error.issues }, 400);
         }
 
-        const { reference_code, ...rest } = parsed.data;
+        const { reference_code, source_channel: _ignoredSourceChannel, ...rest } = parsed.data;
 
         // Channel is decided from real backend signals, never from the AI's
         // own source_channel guess or from transcript wording.
         const communication_channel = resolveChannel({
           communication_channel: rest.communication_channel ?? null,
-          source_channel: rest.source_channel ?? null,
           call_control_id: rest.call_control_id ?? null,
           call_leg_id: rest.call_leg_id ?? null,
           call_sid: rest.call_sid ?? null,
