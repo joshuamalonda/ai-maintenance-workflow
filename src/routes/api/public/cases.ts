@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
+import { normaliseTranscript, resolveChannel } from "@/lib/channel";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,32 +15,10 @@ const json = (body: unknown, status = 200) =>
     headers: { "Content-Type": "application/json", ...corsHeaders },
   });
 
-const transcriptTurn = z.object({
-  role: z.string().max(50).optional(),
-  speaker: z.string().max(50).optional(),
-  message: z.string().optional(),
-  text: z.string().optional(),
-  content: z.string().optional(),
-});
-
-// Accepts either a plain transcript string or a structured turn array
-// (ElevenLabs / Telnyx conversation format) which is flattened to text.
-const transcriptField = z
-  .union([z.string().max(100000), z.array(transcriptTurn).max(2000)])
-  .nullish()
-  .transform((value) => {
-    if (value == null) return value;
-    if (typeof value === "string") return value;
-    return value
-      .map((turn) => {
-        const who = turn.role ?? turn.speaker ?? "unknown";
-        const said = turn.message ?? turn.text ?? turn.content ?? "";
-        return `${who}: ${said}`.trim();
-      })
-      .filter((line) => line.length > 0)
-      .join("\n")
-      .slice(0, 100000);
-  });
+// Accepts a plain transcript string, a structured turn array, or the raw
+// ElevenLabs conversation-history envelope. Normalisation to the canonical
+// "role: text" form happens in normaliseTranscript().
+const transcriptField = z.unknown().nullish();
 
 const caseSchema = z.object({
   reference_code: z.string().min(1).max(64).optional(),
@@ -53,6 +32,8 @@ const caseSchema = z.object({
   ai_confidence: z.number().min(0).max(1).nullish(),
   last_ai_action: z.string().max(2000).nullish(),
   source_channel: z.string().max(50).default("email"),
+  // Authoritative channel. Optional: derived from real signals when absent.
+  communication_channel: z.enum(["phone", "whatsapp"]).nullish(),
   // reported_at intentionally not accepted: the database created_at timestamp
   // is the source of truth for when a case was reported.
   preferred_language: z.string().max(100).nullish(),
