@@ -22,31 +22,62 @@ export type ResolvedEndpoint = {
   identifier: string;
 };
 
+export type TelnyxCallContext = {
+  conversationId: string | null;
+  callControlId: string | null;
+  agentTarget: string | null;
+};
+
+function metaString(meta: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = meta[key];
+    if (typeof value === "string" && value.length > 0) return value;
+  }
+  return null;
+}
+
 /**
- * Looks up the Telnyx conversation for a live/just-ended call and returns the
- * verified destination number (`telnyx_agent_target`). This is a trusted
- * server-side read: it never relies on a value supplied by the AI assistant.
+ * Trusted server-side read of the Telnyx conversation behind a call. Matches
+ * on `call_control_id` when available, otherwise falls back to the
+ * `conversation_id` the assistant reported. Returns the verified destination
+ * (`telnyx_agent_target`) plus the call control id for enrichment. Never
+ * relies on a destination value supplied by the AI assistant.
  */
-export async function fetchTelnyxAgentTarget(
-  callControlId: string,
+export async function fetchTelnyxCallContext(
+  input: { callControlId?: string | null; conversationId?: string | null },
   apiKey: string,
-): Promise<string | null> {
+): Promise<TelnyxCallContext | null> {
+  const callControlId = input.callControlId ?? null;
+  const conversationId = input.conversationId ?? null;
+  if (!callControlId && !conversationId) return null;
+
   try {
     const response = await fetch(`${TELNYX_API}/ai/conversations?page[size]=100`, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     if (!response.ok) return null;
     const payload = (await response.json()) as {
-      data?: Array<{ metadata?: Record<string, unknown> | null }>;
+      data?: Array<{ id?: string; metadata?: Record<string, unknown> | null }>;
     };
     for (const conversation of payload.data ?? []) {
       const meta = conversation.metadata ?? {};
-      if (meta["call_control_id"] !== callControlId) continue;
-      const target = meta["telnyx_agent_target"] ?? meta["to"];
-      return typeof target === "string" && target.length > 0 ? target : null;
+      const metaControlId = metaString(meta, [
+        "call_control_id",
+        "telnyx_call_control_id",
+        "telnyx_call_id",
+      ]);
+      const matches = callControlId
+        ? metaControlId === callControlId
+        : conversation.id === conversationId;
+      if (!matches) continue;
+      return {
+        conversationId: conversation.id ?? conversationId,
+        callControlId: callControlId ?? metaControlId,
+        agentTarget: metaString(meta, ["telnyx_agent_target", "to", "destination_number"]),
+      };
     }
   } catch (error) {
-    console.error("[agency] telnyx agent target lookup failed", error);
+    console.error("[agency] telnyx conversation lookup failed", error);
   }
   return null;
 }
