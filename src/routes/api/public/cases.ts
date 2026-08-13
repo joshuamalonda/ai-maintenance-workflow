@@ -34,8 +34,13 @@ const caseSchema = z.object({
   // Accepted for backwards compatibility with older tool payloads, but
   // ignored: the backend alone resolves the channel from real signals.
   source_channel: z.string().max(50).nullish(),
-  // Authoritative channel. Optional: derived from real signals when absent.
-  communication_channel: z.enum(["phone", "whatsapp"]).nullish(),
+  // Authoritative channel hint. Case-insensitive ("Phone" -> "phone").
+  communication_channel: z
+    .preprocess(
+      (value) => (typeof value === "string" ? value.trim().toLowerCase() : value),
+      z.enum(["phone", "whatsapp"]).nullish(),
+    )
+    .nullish(),
   // reported_at intentionally not accepted: the database created_at timestamp
   // is the source of truth for when a case was reported.
   preferred_language: z.string().max(100).nullish(),
@@ -97,16 +102,27 @@ export const Route = createFileRoute("/api/public/cases")({
         } = parsed.data;
 
         // ---- Agency resolution (strict: no default tenant) ----------------
-        const { fetchTelnyxAgentTarget, resolveEndpointAgency } = await import(
+        const { fetchTelnyxCallContext, resolveEndpointAgency } = await import(
           "@/lib/agency.server"
         );
 
         // Prefer the server-verified Telnyx destination over anything in the
         // payload; fall back to explicitly supplied destination fields.
         let destination: string | null = null;
+        let resolvedCallControlId: string | null = rest.call_control_id ?? null;
         const telnyxKey = process.env["TELNYX_API_KEY"];
-        if (rest.call_control_id && telnyxKey) {
-          destination = await fetchTelnyxAgentTarget(rest.call_control_id, telnyxKey);
+        if (telnyxKey && (rest.call_control_id || rest.conversation_id)) {
+          const context = await fetchTelnyxCallContext(
+            {
+              callControlId: rest.call_control_id ?? null,
+              conversationId: rest.conversation_id ?? null,
+            },
+            telnyxKey,
+          );
+          if (context) {
+            destination = context.agentTarget;
+            resolvedCallControlId = resolvedCallControlId ?? context.callControlId;
+          }
         }
         destination =
           destination ??
@@ -169,6 +185,9 @@ export const Route = createFileRoute("/api/public/cases")({
           communication_channel,
           source_channel: communication_channel,
           agency_id: endpoint.agencyId,
+          ...(communication_channel === "phone" && resolvedCallControlId
+            ? { call_control_id: resolvedCallControlId }
+            : {}),
           ...channelFields,
           ...(reference_code ? { reference_code } : {}),
         };
