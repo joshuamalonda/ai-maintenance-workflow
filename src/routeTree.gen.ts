@@ -14,6 +14,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedPropertiesIndexRouteImport } from './routes/_authenticated/properties.index'
+import { Route as AuthenticatedContractorsIndexRouteImport } from './routes/_authenticated/contractors.index'
 import { Route as AuthenticatedCasesIndexRouteImport } from './routes/_authenticated/cases.index'
 import { Route as ApiPublicTelnyxEventsRouteImport } from './routes/api/public/telnyx-events'
 import { Route as ApiPublicEnrichCallsRouteImport } from './routes/api/public/enrich-calls'
@@ -44,6 +45,12 @@ const AuthenticatedPropertiesIndexRoute =
   AuthenticatedPropertiesIndexRouteImport.update({
     id: '/properties/',
     path: '/properties/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedContractorsIndexRoute =
+  AuthenticatedContractorsIndexRouteImport.update({
+    id: '/contractors/',
+    path: '/contractors/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedCasesIndexRoute = AuthenticatedCasesIndexRouteImport.update({
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/cases/': typeof AuthenticatedCasesIndexRoute
+  '/contractors/': typeof AuthenticatedContractorsIndexRoute
   '/properties/': typeof AuthenticatedPropertiesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -101,6 +109,7 @@ export interface FileRoutesByTo {
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/cases': typeof AuthenticatedCasesIndexRoute
+  '/contractors': typeof AuthenticatedContractorsIndexRoute
   '/properties': typeof AuthenticatedPropertiesIndexRoute
 }
 export interface FileRoutesById {
@@ -115,6 +124,7 @@ export interface FileRoutesById {
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/_authenticated/cases/': typeof AuthenticatedCasesIndexRoute
+  '/_authenticated/contractors/': typeof AuthenticatedContractorsIndexRoute
   '/_authenticated/properties/': typeof AuthenticatedPropertiesIndexRoute
 }
 export interface FileRouteTypes {
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
     | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
     | '/cases/'
+    | '/contractors/'
     | '/properties/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -141,6 +152,7 @@ export interface FileRouteTypes {
     | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
     | '/cases'
+    | '/contractors'
     | '/properties'
   id:
     | '__root__'
@@ -154,6 +166,7 @@ export interface FileRouteTypes {
     | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
     | '/_authenticated/cases/'
+    | '/_authenticated/contractors/'
     | '/_authenticated/properties/'
   fileRoutesById: FileRoutesById
 }
@@ -201,6 +214,13 @@ declare module '@tanstack/react-router' {
       path: '/properties'
       fullPath: '/properties/'
       preLoaderRoute: typeof AuthenticatedPropertiesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/contractors/': {
+      id: '/_authenticated/contractors/'
+      path: '/contractors'
+      fullPath: '/contractors/'
+      preLoaderRoute: typeof AuthenticatedContractorsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/cases/': {
@@ -253,6 +273,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCasesCaseIdRoute: typeof AuthenticatedCasesCaseIdRoute
   AuthenticatedPropertiesPropertyIdRoute: typeof AuthenticatedPropertiesPropertyIdRoute
   AuthenticatedCasesIndexRoute: typeof AuthenticatedCasesIndexRoute
+  AuthenticatedContractorsIndexRoute: typeof AuthenticatedContractorsIndexRoute
   AuthenticatedPropertiesIndexRoute: typeof AuthenticatedPropertiesIndexRoute
 }
 
@@ -262,6 +283,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPropertiesPropertyIdRoute:
     AuthenticatedPropertiesPropertyIdRoute,
   AuthenticatedCasesIndexRoute: AuthenticatedCasesIndexRoute,
+  AuthenticatedContractorsIndexRoute: AuthenticatedContractorsIndexRoute,
   AuthenticatedPropertiesIndexRoute: AuthenticatedPropertiesIndexRoute,
 }
 
