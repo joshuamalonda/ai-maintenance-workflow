@@ -13,6 +13,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedPropertiesIndexRouteImport } from './routes/_authenticated/properties.index'
 import { Route as AuthenticatedCasesIndexRouteImport } from './routes/_authenticated/cases.index'
 import { Route as ApiPublicTelnyxEventsRouteImport } from './routes/api/public/telnyx-events'
 import { Route as ApiPublicEnrichCallsRouteImport } from './routes/api/public/enrich-calls'
@@ -38,6 +39,12 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPropertiesIndexRoute =
+  AuthenticatedPropertiesIndexRouteImport.update({
+    id: '/properties/',
+    path: '/properties/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCasesIndexRoute = AuthenticatedCasesIndexRouteImport.update({
   id: '/cases/',
   path: '/cases/',
@@ -74,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/cases/': typeof AuthenticatedCasesIndexRoute
+  '/properties/': typeof AuthenticatedPropertiesIndexRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -84,6 +92,7 @@ export interface FileRoutesByTo {
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/cases': typeof AuthenticatedCasesIndexRoute
+  '/properties': typeof AuthenticatedPropertiesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -96,6 +105,7 @@ export interface FileRoutesById {
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
   '/_authenticated/cases/': typeof AuthenticatedCasesIndexRoute
+  '/_authenticated/properties/': typeof AuthenticatedPropertiesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
     | '/cases/'
+    | '/properties/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
     | '/cases'
+    | '/properties'
   id:
     | '__root__'
     | '/_authenticated'
@@ -129,6 +141,7 @@ export interface FileRouteTypes {
     | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
     | '/_authenticated/cases/'
+    | '/_authenticated/properties/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/properties/': {
+      id: '/_authenticated/properties/'
+      path: '/properties'
+      fullPath: '/properties/'
+      preLoaderRoute: typeof AuthenticatedPropertiesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/cases/': {
@@ -212,12 +232,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCasesCaseIdRoute: typeof AuthenticatedCasesCaseIdRoute
   AuthenticatedCasesIndexRoute: typeof AuthenticatedCasesIndexRoute
+  AuthenticatedPropertiesIndexRoute: typeof AuthenticatedPropertiesIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCasesCaseIdRoute: AuthenticatedCasesCaseIdRoute,
   AuthenticatedCasesIndexRoute: AuthenticatedCasesIndexRoute,
+  AuthenticatedPropertiesIndexRoute: AuthenticatedPropertiesIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
