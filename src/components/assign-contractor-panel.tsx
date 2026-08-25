@@ -3,9 +3,22 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   assignCaseContractor,
+  setContractorResponse,
   listPropertyContractorsForCase,
   type CaseDetail,
 } from "@/lib/cases.functions";
+
+const responseLabels: Record<string, string> = {
+  pending: "Awaiting contractor response",
+  accepted: "Contractor accepted",
+  declined: "Contractor declined",
+};
+
+const responseStyles: Record<string, string> = {
+  pending: "border-high/25 bg-high/8 text-high",
+  accepted: "border-primary/30 bg-brand-tint text-accent-foreground",
+  declined: "border-destructive/30 bg-destructive/8 text-destructive",
+};
 
 export function AssignContractorPanel({ caseRecord }: { caseRecord: CaseDetail }) {
   const queryClient = useQueryClient();
