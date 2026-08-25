@@ -40,7 +40,16 @@ export function AssignContractorPanel({ caseRecord }: { caseRecord: CaseDetail }
     },
   });
 
+  const responseMutation = useMutation({
+    mutationFn: (response: "accepted" | "declined") =>
+      setContractorResponse({ data: { caseId: caseRecord.id, response } }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["maintenance_cases", caseRecord.id] });
+    },
+  });
+
   const assigned = caseRecord.contractor;
+  const responseStatus = caseRecord.contractor_response_status;
 
   return (
     <div className="rounded-lg border border-border bg-surface p-5">
