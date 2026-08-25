@@ -203,10 +203,58 @@ export const assignCaseContractor = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: updateError } = await supabaseAdmin
       .from("maintenance_cases")
-      .update({ contractor_id: contractorId, assigned_at: assignedAt })
+      .update({
+        contractor_id: contractorId,
+        assigned_at: assignedAt,
+        // Assigning starts a fresh response cycle; clearing resets it entirely.
+        contractor_response_status: contractorId ? "pending" : null,
+        contractor_responded_at: null,
+      })
       .eq("id", row.id)
       .eq("agency_id", row.agency_id);
     if (updateError) throw new Error(updateError.message);
 
     return { caseId: row.id, contractorId, assignedAt };
+  });
+
+/**
+ * Records the assigned contractor's accept/decline response on a case.
+ * Ownership is checked through the caller's RLS-scoped client and the update
+ * only applies when the case still has a contractor assigned. Assignment
+ * fields are deliberately left untouched.
+ */
+export const setContractorResponse = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        caseId: z.string().uuid(),
+        response: z.enum(["accepted", "declined"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("maintenance_cases")
+      .select("id, agency_id, contractor_id")
+      .eq("id", data.caseId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Case not found");
+    if (!row.contractor_id) throw new Error("No contractor is assigned to this case");
+
+    const respondedAt = new Date().toISOString();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: updateError } = await supabaseAdmin
+      .from("maintenance_cases")
+      .update({
+        contractor_response_status: data.response,
+        contractor_responded_at: respondedAt,
+      })
+      .eq("id", row.id)
+      .eq("agency_id", row.agency_id)
+      .eq("contractor_id", row.contractor_id);
+    if (updateError) throw new Error(updateError.message);
+
+    return { caseId: row.id, response: data.response, respondedAt };
   });
