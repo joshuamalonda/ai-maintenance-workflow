@@ -101,18 +101,6 @@ export function LinkedPropertyPanel({ caseRecord }: { caseRecord: CaseDetail }) 
                 : "No landlord recorded on this property"
             }
           />
-          {caseRecord.contractor && (
-            <Row
-              label="Assigned contractor"
-              value={[
-                caseRecord.contractor.name,
-                caseRecord.contractor.company,
-                caseRecord.contractor.trade,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            />
-          )}
         </dl>
       ) : (
         <p className="mt-2 text-sm text-muted-foreground">
