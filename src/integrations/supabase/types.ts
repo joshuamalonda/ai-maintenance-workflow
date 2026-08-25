@@ -246,6 +246,7 @@ export type Database = {
           agency_id: string
           ai_confidence: number | null
           ai_summary: string | null
+          assigned_at: string | null
           call_control_id: string | null
           call_duration_secs: number | null
           call_leg_id: string | null
@@ -253,6 +254,7 @@ export type Database = {
           call_sid: string | null
           caller_number: string | null
           communication_channel: string
+          contractor_id: string | null
           contractor_required: boolean | null
           conversation_id: string | null
           created_at: string
@@ -267,12 +269,14 @@ export type Database = {
           preferred_language: string | null
           priority: string | null
           property_address: string
+          property_id: string | null
           recommended_action: string | null
           recording_storage_path: string | null
           reference_code: string
           reported_at: string
           source_channel: string
           status: string
+          tenant_id: string | null
           tenant_name: string
           transcript: string | null
           troubleshooting: string | null
@@ -283,6 +287,7 @@ export type Database = {
           agency_id: string
           ai_confidence?: number | null
           ai_summary?: string | null
+          assigned_at?: string | null
           call_control_id?: string | null
           call_duration_secs?: number | null
           call_leg_id?: string | null
@@ -290,6 +295,7 @@ export type Database = {
           call_sid?: string | null
           caller_number?: string | null
           communication_channel?: string
+          contractor_id?: string | null
           contractor_required?: boolean | null
           conversation_id?: string | null
           created_at?: string
@@ -304,12 +310,14 @@ export type Database = {
           preferred_language?: string | null
           priority?: string | null
           property_address: string
+          property_id?: string | null
           recommended_action?: string | null
           recording_storage_path?: string | null
           reference_code?: string
           reported_at?: string
           source_channel?: string
           status?: string
+          tenant_id?: string | null
           tenant_name: string
           transcript?: string | null
           troubleshooting?: string | null
@@ -320,6 +328,7 @@ export type Database = {
           agency_id?: string
           ai_confidence?: number | null
           ai_summary?: string | null
+          assigned_at?: string | null
           call_control_id?: string | null
           call_duration_secs?: number | null
           call_leg_id?: string | null
@@ -327,6 +336,7 @@ export type Database = {
           call_sid?: string | null
           caller_number?: string | null
           communication_channel?: string
+          contractor_id?: string | null
           contractor_required?: boolean | null
           conversation_id?: string | null
           created_at?: string
@@ -341,12 +351,14 @@ export type Database = {
           preferred_language?: string | null
           priority?: string | null
           property_address?: string
+          property_id?: string | null
           recommended_action?: string | null
           recording_storage_path?: string | null
           reference_code?: string
           reported_at?: string
           source_channel?: string
           status?: string
+          tenant_id?: string | null
           tenant_name?: string
           transcript?: string | null
           troubleshooting?: string | null
@@ -359,6 +371,27 @@ export type Database = {
             columns: ["agency_id"]
             isOneToOne: false
             referencedRelation: "agencies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_cases_contractor_id_fkey"
+            columns: ["contractor_id"]
+            isOneToOne: false
+            referencedRelation: "contractors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_cases_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "maintenance_cases_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
