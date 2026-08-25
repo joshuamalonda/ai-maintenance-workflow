@@ -9,6 +9,7 @@ import { DeleteCaseButton } from "@/components/delete-case-button";
 import { TranscriptView } from "@/components/transcript-view";
 import { ChannelBadge, channelLabel, normaliseChannel } from "@/components/channel-badge";
 import { CallRecordingPlayer } from "@/components/call-recording-player";
+import { LinkedPropertyPanel } from "@/components/link-property-panel";
 
 const caseQuery = (id: string) =>
   queryOptions({
@@ -222,6 +223,7 @@ function CaseDetail() {
         </div>
 
         <aside className="space-y-5">
+          <LinkedPropertyPanel caseRecord={data} />
           <div className="rounded-lg border border-border bg-surface p-5">
             <h2 className="text-sm font-semibold text-ink">Case information</h2>
             <dl className="mt-2">
