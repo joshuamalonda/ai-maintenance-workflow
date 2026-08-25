@@ -108,7 +108,7 @@ export const Route = createFileRoute("/api/public/telnyx/messaging")({
                   payload.sent_at ??
                   payload.received_at ??
                   null,
-                payload: event as unknown as Record<string, unknown>,
+                payload: JSON.parse(rawBody),
               },
               { onConflict: "event_id", ignoreDuplicates: true },
             );
