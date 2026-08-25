@@ -200,6 +200,20 @@ export const Route = createFileRoute("/api/public/cases")({
           .single();
 
         if (error) return json({ error: error.message }, 400);
+
+        // Post-insert, best-effort directory matching. Never affects the
+        // intake result: failures leave property_id/tenant_id null.
+        try {
+          const { matchCaseToProperty } = await import("@/lib/matching.server");
+          await matchCaseToProperty({
+            caseId: (data as { id: string }).id,
+            agencyId: endpoint.agencyId,
+            propertyAddress: rest.property_address,
+          });
+        } catch {
+          /* matching is advisory only */
+        }
+
         return json({ ok: true, case: data }, 201);
       },
     },
