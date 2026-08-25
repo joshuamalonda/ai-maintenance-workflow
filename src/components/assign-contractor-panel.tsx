@@ -89,6 +89,48 @@ export function AssignContractorPanel({ caseRecord }: { caseRecord: CaseDetail }
               ? ` · assigned ${new Date(caseRecord.assigned_at).toLocaleString("en-GB")}`
               : ""}
           </p>
+          {responseStatus && (
+            <div className="mt-3">
+              <span
+                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                  responseStyles[responseStatus] ?? responseStyles.pending
+                }`}
+              >
+                {responseLabels[responseStatus] ?? responseStatus}
+              </span>
+              {caseRecord.contractor_responded_at && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Responded {new Date(caseRecord.contractor_responded_at).toLocaleString("en-GB")}
+                </p>
+              )}
+            </div>
+          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={responseMutation.isPending || responseStatus === "accepted"}
+              onClick={() => responseMutation.mutate("accepted")}
+              className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-ink hover:border-primary hover:bg-brand-tint disabled:opacity-50"
+            >
+              Accept job
+            </button>
+            <button
+              type="button"
+              disabled={responseMutation.isPending || responseStatus === "declined"}
+              onClick={() => responseMutation.mutate("declined")}
+              className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-destructive hover:border-destructive disabled:opacity-50"
+            >
+              Can't take job
+            </button>
+          </div>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Internal test actions — contractor SMS links are not live yet.
+          </p>
+          {responseMutation.isError && (
+            <p className="mt-1 text-xs text-destructive">
+              {(responseMutation.error as Error).message}
+            </p>
+          )}
         </div>
       ) : (
         <p className="mt-2 text-sm text-muted-foreground">
