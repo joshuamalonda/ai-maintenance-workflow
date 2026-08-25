@@ -18,6 +18,7 @@ import { Route as AuthenticatedCasesIndexRouteImport } from './routes/_authentic
 import { Route as ApiPublicTelnyxEventsRouteImport } from './routes/api/public/telnyx-events'
 import { Route as ApiPublicEnrichCallsRouteImport } from './routes/api/public/enrich-calls'
 import { Route as ApiPublicCasesRouteImport } from './routes/api/public/cases'
+import { Route as AuthenticatedPropertiesPropertyIdRouteImport } from './routes/_authenticated/properties.$propertyId'
 import { Route as AuthenticatedCasesCaseIdRouteImport } from './routes/_authenticated/cases.$caseId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -65,6 +66,12 @@ const ApiPublicCasesRoute = ApiPublicCasesRouteImport.update({
   path: '/api/public/cases',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedPropertiesPropertyIdRoute =
+  AuthenticatedPropertiesPropertyIdRouteImport.update({
+    id: '/properties/$propertyId',
+    path: '/properties/$propertyId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCasesCaseIdRoute =
   AuthenticatedCasesCaseIdRouteImport.update({
     id: '/cases/$caseId',
@@ -77,6 +84,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
+  '/properties/$propertyId': typeof AuthenticatedPropertiesPropertyIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
@@ -88,6 +96,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/': typeof AuthenticatedIndexRoute
   '/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
+  '/properties/$propertyId': typeof AuthenticatedPropertiesPropertyIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
@@ -101,6 +110,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
+  '/_authenticated/properties/$propertyId': typeof AuthenticatedPropertiesPropertyIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
   '/api/public/telnyx-events': typeof ApiPublicTelnyxEventsRoute
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/cases/$caseId'
+    | '/properties/$propertyId'
     | '/api/public/cases'
     | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/'
     | '/cases/$caseId'
+    | '/properties/$propertyId'
     | '/api/public/cases'
     | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
@@ -137,6 +149,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/'
     | '/_authenticated/cases/$caseId'
+    | '/_authenticated/properties/$propertyId'
     | '/api/public/cases'
     | '/api/public/enrich-calls'
     | '/api/public/telnyx-events'
@@ -218,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCasesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/properties/$propertyId': {
+      id: '/_authenticated/properties/$propertyId'
+      path: '/properties/$propertyId'
+      fullPath: '/properties/$propertyId'
+      preLoaderRoute: typeof AuthenticatedPropertiesPropertyIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/cases/$caseId': {
       id: '/_authenticated/cases/$caseId'
       path: '/cases/$caseId'
@@ -231,6 +251,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCasesCaseIdRoute: typeof AuthenticatedCasesCaseIdRoute
+  AuthenticatedPropertiesPropertyIdRoute: typeof AuthenticatedPropertiesPropertyIdRoute
   AuthenticatedCasesIndexRoute: typeof AuthenticatedCasesIndexRoute
   AuthenticatedPropertiesIndexRoute: typeof AuthenticatedPropertiesIndexRoute
 }
@@ -238,6 +259,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCasesCaseIdRoute: AuthenticatedCasesCaseIdRoute,
+  AuthenticatedPropertiesPropertyIdRoute:
+    AuthenticatedPropertiesPropertyIdRoute,
   AuthenticatedCasesIndexRoute: AuthenticatedCasesIndexRoute,
   AuthenticatedPropertiesIndexRoute: AuthenticatedPropertiesIndexRoute,
 }

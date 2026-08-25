@@ -1,13 +1,14 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
-import { ClipboardList, LayoutGrid, Menu, X } from "lucide-react";
+import { Building2, ClipboardList, LayoutGrid, Menu, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { OveloWordmark } from "@/components/ovelo-logo";
 
 const nav = [
   { to: "/", label: "Overview", icon: LayoutGrid, exact: true },
   { to: "/cases", label: "Maintenance cases", icon: ClipboardList, exact: false },
+  { to: "/properties", label: "Properties", icon: Building2, exact: false },
 ] as const;
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
