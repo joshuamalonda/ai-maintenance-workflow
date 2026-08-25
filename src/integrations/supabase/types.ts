@@ -256,6 +256,8 @@ export type Database = {
           communication_channel: string
           contractor_id: string | null
           contractor_required: boolean | null
+          contractor_responded_at: string | null
+          contractor_response_status: string | null
           conversation_id: string | null
           created_at: string
           enrichment_attempts: number
@@ -297,6 +299,8 @@ export type Database = {
           communication_channel?: string
           contractor_id?: string | null
           contractor_required?: boolean | null
+          contractor_responded_at?: string | null
+          contractor_response_status?: string | null
           conversation_id?: string | null
           created_at?: string
           enrichment_attempts?: number
@@ -338,6 +342,8 @@ export type Database = {
           communication_channel?: string
           contractor_id?: string | null
           contractor_required?: boolean | null
+          contractor_responded_at?: string | null
+          contractor_response_status?: string | null
           conversation_id?: string | null
           created_at?: string
           enrichment_attempts?: number
