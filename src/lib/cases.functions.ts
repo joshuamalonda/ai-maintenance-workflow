@@ -20,17 +20,86 @@ export const listCases = createServerFn({ method: "GET" })
     return (data ?? []) as MaintenanceCase[];
   });
 
+const DETAIL_COLUMNS = `${CASE_COLUMNS}, agency_id, property_id, tenant_id, contractor_id, assigned_at, property:properties(id, address, postcode, landlord:landlords(id, name, phone, email), tenant:tenants(id, name, phone, email)), linked_tenant:tenants(id, name, phone, email), contractor:contractors(id, name, company, trade, phone, email)`;
+
+export type LinkedContact = { id: string; name: string; phone: string | null; email: string | null };
+
+export type CaseDetail = MaintenanceCase & {
+  property:
+    | {
+        id: string;
+        address: string;
+        postcode: string | null;
+        landlord: LinkedContact | null;
+        tenant: LinkedContact | null;
+      }
+    | null;
+  linked_tenant: LinkedContact | null;
+  contractor:
+    | (LinkedContact & { company: string | null; trade: string | null })
+    | null;
+};
+
 export const getCase = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase
       .from("maintenance_cases")
-      .select(CASE_COLUMNS)
+      .select(DETAIL_COLUMNS)
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    return (row ?? null) as MaintenanceCase | null;
+    return (row ?? null) as unknown as CaseDetail | null;
+  });
+
+/**
+ * Manually links a case to a property in the same agency. Ownership of both
+ * rows is verified through the caller's RLS-scoped client before the
+ * privileged update runs, so cross-agency linking is impossible.
+ */
+export const linkCaseToProperty = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({ caseId: z.string().uuid(), propertyId: z.string().uuid().nullable() })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("maintenance_cases")
+      .select("id, agency_id")
+      .eq("id", data.caseId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Case not found");
+
+    let propertyId: string | null = null;
+    let tenantId: string | null = null;
+
+    if (data.propertyId) {
+      const { data: property, error: propError } = await context.supabase
+        .from("properties")
+        .select("id, agency_id, tenant_id")
+        .eq("id", data.propertyId)
+        .maybeSingle();
+      if (propError) throw new Error(propError.message);
+      if (!property || property.agency_id !== row.agency_id) {
+        throw new Error("Property not found for this agency");
+      }
+      propertyId = property.id;
+      tenantId = property.tenant_id ?? null;
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: updateError } = await supabaseAdmin
+      .from("maintenance_cases")
+      .update({ property_id: propertyId, tenant_id: tenantId })
+      .eq("id", row.id)
+      .eq("agency_id", row.agency_id);
+    if (updateError) throw new Error(updateError.message);
+
+    return { caseId: row.id, propertyId, tenantId };
   });
 
 export const deleteCase = createServerFn({ method: "POST" })
