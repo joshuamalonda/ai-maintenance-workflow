@@ -178,7 +178,7 @@ export function ContractorFormDialog({
               type="checkbox"
               checked={draft.active}
               onChange={(e) => set({ active: e.target.checked })}
-              className="size-4 accent-[hsl(var(--primary))]"
+              className="size-4 accent-primary"
             />
             <span className="text-sm text-ink">Active</span>
             <span className="text-xs text-muted-foreground">
