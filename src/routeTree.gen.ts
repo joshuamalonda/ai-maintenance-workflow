@@ -20,6 +20,7 @@ import { Route as ApiPublicTelnyxEventsRouteImport } from './routes/api/public/t
 import { Route as ApiPublicEnrichCallsRouteImport } from './routes/api/public/enrich-calls'
 import { Route as ApiPublicCasesRouteImport } from './routes/api/public/cases'
 import { Route as AuthenticatedPropertiesPropertyIdRouteImport } from './routes/_authenticated/properties.$propertyId'
+import { Route as AuthenticatedContractorsContractorIdRouteImport } from './routes/_authenticated/contractors.$contractorId'
 import { Route as AuthenticatedCasesCaseIdRouteImport } from './routes/_authenticated/cases.$caseId'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -79,6 +80,12 @@ const AuthenticatedPropertiesPropertyIdRoute =
     path: '/properties/$propertyId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedContractorsContractorIdRoute =
+  AuthenticatedContractorsContractorIdRouteImport.update({
+    id: '/contractors/$contractorId',
+    path: '/contractors/$contractorId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCasesCaseIdRoute =
   AuthenticatedCasesCaseIdRouteImport.update({
     id: '/cases/$caseId',
@@ -91,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
+  '/contractors/$contractorId': typeof AuthenticatedContractorsContractorIdRoute
   '/properties/$propertyId': typeof AuthenticatedPropertiesPropertyIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
@@ -104,6 +112,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/': typeof AuthenticatedIndexRoute
   '/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
+  '/contractors/$contractorId': typeof AuthenticatedContractorsContractorIdRoute
   '/properties/$propertyId': typeof AuthenticatedPropertiesPropertyIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
@@ -119,6 +128,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/cases/$caseId': typeof AuthenticatedCasesCaseIdRoute
+  '/_authenticated/contractors/$contractorId': typeof AuthenticatedContractorsContractorIdRoute
   '/_authenticated/properties/$propertyId': typeof AuthenticatedPropertiesPropertyIdRoute
   '/api/public/cases': typeof ApiPublicCasesRoute
   '/api/public/enrich-calls': typeof ApiPublicEnrichCallsRoute
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/cases/$caseId'
+    | '/contractors/$contractorId'
     | '/properties/$propertyId'
     | '/api/public/cases'
     | '/api/public/enrich-calls'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/'
     | '/cases/$caseId'
+    | '/contractors/$contractorId'
     | '/properties/$propertyId'
     | '/api/public/cases'
     | '/api/public/enrich-calls'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/_authenticated/'
     | '/_authenticated/cases/$caseId'
+    | '/_authenticated/contractors/$contractorId'
     | '/_authenticated/properties/$propertyId'
     | '/api/public/cases'
     | '/api/public/enrich-calls'
@@ -258,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPropertiesPropertyIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/contractors/$contractorId': {
+      id: '/_authenticated/contractors/$contractorId'
+      path: '/contractors/$contractorId'
+      fullPath: '/contractors/$contractorId'
+      preLoaderRoute: typeof AuthenticatedContractorsContractorIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/cases/$caseId': {
       id: '/_authenticated/cases/$caseId'
       path: '/cases/$caseId'
@@ -271,6 +291,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCasesCaseIdRoute: typeof AuthenticatedCasesCaseIdRoute
+  AuthenticatedContractorsContractorIdRoute: typeof AuthenticatedContractorsContractorIdRoute
   AuthenticatedPropertiesPropertyIdRoute: typeof AuthenticatedPropertiesPropertyIdRoute
   AuthenticatedCasesIndexRoute: typeof AuthenticatedCasesIndexRoute
   AuthenticatedContractorsIndexRoute: typeof AuthenticatedContractorsIndexRoute
@@ -280,6 +301,8 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCasesCaseIdRoute: AuthenticatedCasesCaseIdRoute,
+  AuthenticatedContractorsContractorIdRoute:
+    AuthenticatedContractorsContractorIdRoute,
   AuthenticatedPropertiesPropertyIdRoute:
     AuthenticatedPropertiesPropertyIdRoute,
   AuthenticatedCasesIndexRoute: AuthenticatedCasesIndexRoute,
