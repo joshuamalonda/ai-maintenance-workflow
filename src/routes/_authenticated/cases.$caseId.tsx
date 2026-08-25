@@ -10,6 +10,7 @@ import { TranscriptView } from "@/components/transcript-view";
 import { ChannelBadge, channelLabel, normaliseChannel } from "@/components/channel-badge";
 import { CallRecordingPlayer } from "@/components/call-recording-player";
 import { LinkedPropertyPanel } from "@/components/link-property-panel";
+import { AssignContractorPanel } from "@/components/assign-contractor-panel";
 
 const caseQuery = (id: string) =>
   queryOptions({
@@ -224,6 +225,7 @@ function CaseDetail() {
 
         <aside className="space-y-5">
           <LinkedPropertyPanel caseRecord={data} />
+          <AssignContractorPanel caseRecord={data} />
           <div className="rounded-lg border border-border bg-surface p-5">
             <h2 className="text-sm font-semibold text-ink">Case information</h2>
             <dl className="mt-2">
