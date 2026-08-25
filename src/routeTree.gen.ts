@@ -22,6 +22,7 @@ import { Route as ApiPublicCasesRouteImport } from './routes/api/public/cases'
 import { Route as AuthenticatedPropertiesPropertyIdRouteImport } from './routes/_authenticated/properties.$propertyId'
 import { Route as AuthenticatedContractorsContractorIdRouteImport } from './routes/_authenticated/contractors.$contractorId'
 import { Route as AuthenticatedCasesCaseIdRouteImport } from './routes/_authenticated/cases.$caseId'
+import { Route as ApiPublicTelnyxMessagingRouteImport } from './routes/api/public/telnyx.messaging'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -92,6 +93,12 @@ const AuthenticatedCasesCaseIdRoute =
     path: '/cases/$caseId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicTelnyxMessagingRoute =
+  ApiPublicTelnyxMessagingRouteImport.update({
+    id: '/api/public/telnyx/messaging',
+    path: '/api/public/telnyx/messaging',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/cases/': typeof AuthenticatedCasesIndexRoute
   '/contractors/': typeof AuthenticatedContractorsIndexRoute
   '/properties/': typeof AuthenticatedPropertiesIndexRoute
+  '/api/public/telnyx/messaging': typeof ApiPublicTelnyxMessagingRoute
 }
 export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
@@ -120,6 +128,7 @@ export interface FileRoutesByTo {
   '/cases': typeof AuthenticatedCasesIndexRoute
   '/contractors': typeof AuthenticatedContractorsIndexRoute
   '/properties': typeof AuthenticatedPropertiesIndexRoute
+  '/api/public/telnyx/messaging': typeof ApiPublicTelnyxMessagingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -136,6 +145,7 @@ export interface FileRoutesById {
   '/_authenticated/cases/': typeof AuthenticatedCasesIndexRoute
   '/_authenticated/contractors/': typeof AuthenticatedContractorsIndexRoute
   '/_authenticated/properties/': typeof AuthenticatedPropertiesIndexRoute
+  '/api/public/telnyx/messaging': typeof ApiPublicTelnyxMessagingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -152,6 +162,7 @@ export interface FileRouteTypes {
     | '/cases/'
     | '/contractors/'
     | '/properties/'
+    | '/api/public/telnyx/messaging'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/auth'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/cases'
     | '/contractors'
     | '/properties'
+    | '/api/public/telnyx/messaging'
   id:
     | '__root__'
     | '/_authenticated'
@@ -181,6 +193,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cases/'
     | '/_authenticated/contractors/'
     | '/_authenticated/properties/'
+    | '/api/public/telnyx/messaging'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -190,6 +203,7 @@ export interface RootRouteChildren {
   ApiPublicCasesRoute: typeof ApiPublicCasesRoute
   ApiPublicEnrichCallsRoute: typeof ApiPublicEnrichCallsRoute
   ApiPublicTelnyxEventsRoute: typeof ApiPublicTelnyxEventsRoute
+  ApiPublicTelnyxMessagingRoute: typeof ApiPublicTelnyxMessagingRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -285,6 +299,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCasesCaseIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/telnyx/messaging': {
+      id: '/api/public/telnyx/messaging'
+      path: '/api/public/telnyx/messaging'
+      fullPath: '/api/public/telnyx/messaging'
+      preLoaderRoute: typeof ApiPublicTelnyxMessagingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -320,6 +341,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicCasesRoute: ApiPublicCasesRoute,
   ApiPublicEnrichCallsRoute: ApiPublicEnrichCallsRoute,
   ApiPublicTelnyxEventsRoute: ApiPublicTelnyxEventsRoute,
+  ApiPublicTelnyxMessagingRoute: ApiPublicTelnyxMessagingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

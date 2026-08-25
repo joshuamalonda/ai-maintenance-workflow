@@ -451,6 +451,42 @@ export type Database = {
           },
         ]
       }
+      telnyx_messaging_events: {
+        Row: {
+          direction: string | null
+          event_id: string
+          event_type: string
+          from_number: string | null
+          message_id: string | null
+          occurred_at: string | null
+          payload: Json
+          received_at: string
+          to_number: string | null
+        }
+        Insert: {
+          direction?: string | null
+          event_id: string
+          event_type: string
+          from_number?: string | null
+          message_id?: string | null
+          occurred_at?: string | null
+          payload: Json
+          received_at?: string
+          to_number?: string | null
+        }
+        Update: {
+          direction?: string | null
+          event_id?: string
+          event_type?: string
+          from_number?: string | null
+          message_id?: string | null
+          occurred_at?: string | null
+          payload?: Json
+          received_at?: string
+          to_number?: string | null
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
           agency_id: string
