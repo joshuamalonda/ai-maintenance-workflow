@@ -11,6 +11,40 @@ export type NotifyCaseCreatedInput = {
 };
 
 /**
+ * Atomically claims the one-time "case created" tenant/landlord notification
+ * for a case. Returns true only for the caller that wins the claim, so the
+ * same SMS pair can never be sent twice — whether the property was matched
+ * automatically at intake or linked manually by the agency later.
+ *
+ * The claim is a conditional UPDATE (`case_created_notified_at IS NULL`), so
+ * concurrent callers are resolved by the database, not by app-level checks.
+ */
+export async function claimCaseCreatedNotification(
+  agencyId: string,
+  caseId: string,
+): Promise<boolean> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("maintenance_cases")
+      .update({ case_created_notified_at: new Date().toISOString() } as never)
+      .eq("id", caseId)
+      .eq("agency_id", agencyId)
+      .is("case_created_notified_at", null)
+      .select("id");
+    if (error) {
+      console.error("[case-notifications] claim failed", error);
+      return false;
+    }
+    return (data ?? []).length > 0;
+  } catch (err) {
+    console.error("[case-notifications] claim unexpected failure", err);
+    return false;
+  }
+}
+
+
+/**
  * Directory numbers are typed by agency staff, commonly in UK national form
  * ("07726 730729"). Convert those to E.164 so they are not silently skipped.
  * Anything already international, or not recognisably UK, is left untouched.
