@@ -63,6 +63,7 @@ export async function sendTelnyxSms(
       },
       body: JSON.stringify({
         from: OVELO_SENDER_ID,
+        messaging_profile_id: "4001a039-71fa-4381-8d93-785e1031c86d",
         to,
         text,
       }),
