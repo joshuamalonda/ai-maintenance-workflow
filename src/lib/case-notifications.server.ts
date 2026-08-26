@@ -74,3 +74,66 @@ export async function notifyCaseCreated(input: NotifyCaseCreatedInput): Promise<
     console.error("[case-notifications] unexpected failure", err);
   }
 }
+
+export type NotifyContractorAssignedInput = {
+  agencyId: string;
+  caseId: string;
+  contractorId: string;
+};
+
+/**
+ * Sends the assigned contractor an SMS about the new job. Best-effort: any
+ * failure (missing/invalid phone, Telnyx error) is logged and swallowed so a
+ * notification problem can never fail or undo the assignment itself.
+ */
+export async function notifyContractorAssigned(
+  input: NotifyContractorAssignedInput,
+): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: contractor, error: contractorError } = await supabaseAdmin
+      .from("contractors")
+      .select("id, phone")
+      .eq("id", input.contractorId)
+      .eq("agency_id", input.agencyId)
+      .maybeSingle();
+    if (contractorError || !contractor) {
+      console.error("[case-notifications] contractor lookup failed", contractorError);
+      return;
+    }
+
+    const phone = toE164(contractor.phone);
+    if (!phone || !isValidE164(phone)) {
+      console.error(
+        `[case-notifications] contractor ${input.contractorId} has no valid E.164 phone; SMS skipped`,
+      );
+      return;
+    }
+
+    const { data: caseRow, error: caseError } = await supabaseAdmin
+      .from("maintenance_cases")
+      .select("reference_code, property_address, issue_description, issue_category, ai_summary")
+      .eq("id", input.caseId)
+      .eq("agency_id", input.agencyId)
+      .maybeSingle();
+    if (caseError || !caseRow) {
+      console.error("[case-notifications] case lookup failed", caseError);
+      return;
+    }
+
+    const reference = caseRow.reference_code ?? input.caseId;
+    const address = caseRow.property_address ?? "the property";
+    const rawIssue =
+      caseRow.ai_summary ?? caseRow.issue_description ?? caseRow.issue_category ?? "maintenance issue";
+    const issue = rawIssue.replace(/\s+/g, " ").trim().slice(0, 300);
+
+    await trySend(
+      "contractor",
+      phone,
+      `New OVELO maintenance job ${reference}. ${address}. Issue: ${issue}. Please contact the agency to confirm you can handle this job.`,
+    );
+  } catch (err) {
+    console.error("[case-notifications] contractor SMS unexpected failure", err);
+  }
+}
