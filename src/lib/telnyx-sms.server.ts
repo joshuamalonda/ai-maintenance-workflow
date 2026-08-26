@@ -81,7 +81,7 @@ export async function sendTelnyxSms(
     return {
       error: `Telnyx API error: ${response.status} ${response.statusText}`,
       status: response.status,
-      detail: data?.errors ?? data,
+      detail: JSON.stringify(data?.errors ?? data),
     };
   }
 
@@ -89,6 +89,6 @@ export async function sendTelnyxSms(
   return {
     messageId: message?.id ?? null,
     status: message?.status ?? null,
-    raw: data,
+    raw: JSON.stringify(data),
   };
 }
