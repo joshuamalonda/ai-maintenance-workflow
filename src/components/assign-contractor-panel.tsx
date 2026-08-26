@@ -37,6 +37,9 @@ const responseStyles: Record<string, string> = {
 export function AssignContractorPanel({ caseRecord }: { caseRecord: CaseDetail }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   const propertyId = caseRecord.property?.id ?? null;
 
   const { data: contractors = [], isLoading } = useQuery({
