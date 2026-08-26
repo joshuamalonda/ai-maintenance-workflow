@@ -203,8 +203,6 @@ export function AssignContractorPanel({ caseRecord }: { caseRecord: CaseDetail }
           </Dialog>
         </div>
       ) : (
-        </div>
-      ) : (
         <p className="mt-2 text-sm text-muted-foreground">
           No contractor is assigned to this case yet.
         </p>
