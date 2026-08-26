@@ -226,6 +226,13 @@ export const assignCaseContractor = createServerFn({ method: "POST" })
       });
     }
 
+    // Best-effort agency milestone notification.
+    const { notifyAgencyEvent } = await import("./case-notifications.server");
+    await notifyAgencyEvent(row.agency_id, {
+      type: contractorId ? "contractor_assigned" : "contractor_unassigned",
+      caseId: row.id,
+    });
+
     return { caseId: row.id, contractorId, assignedAt };
   });
 
@@ -284,6 +291,13 @@ export const setContractorResponse = createServerFn({ method: "POST" })
         appointmentAt: data.appointmentAt,
       }).catch((err) => console.error("[cases] appointment SMS failed", err));
     }
+
+    const { notifyAgencyEvent } = await import("./case-notifications.server");
+    await notifyAgencyEvent(row.agency_id, {
+      type: data.response === "accepted" ? "contractor_accepted" : "contractor_declined",
+      caseId: row.id,
+      ...(data.response === "accepted" ? { appointmentAt: data.appointmentAt ?? null } : {}),
+    } as never);
 
     return { caseId: row.id, response: data.response, respondedAt };
   });

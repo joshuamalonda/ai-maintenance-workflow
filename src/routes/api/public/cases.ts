@@ -226,6 +226,17 @@ export const Route = createFileRoute("/api/public/cases")({
           /* matching is advisory only */
         }
 
+        // Best-effort agency milestone notification. Never affects intake.
+        try {
+          const { notifyAgencyEvent } = await import("@/lib/case-notifications.server");
+          await notifyAgencyEvent(endpoint.agencyId, {
+            type: "case_created",
+            caseId: (data as { id: string }).id,
+          });
+        } catch {
+          /* agency notification is best-effort */
+        }
+
 
         return json({ ok: true, case: data }, 201);
       },
