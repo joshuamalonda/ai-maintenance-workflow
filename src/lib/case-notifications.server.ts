@@ -294,9 +294,7 @@ export type AgencyEvent =
   | { type: "case_created"; caseId: string }
   | { type: "contractor_assigned"; caseId: string }
   | { type: "contractor_accepted"; caseId: string; appointmentAt?: string | null }
-  | { type: "contractor_declined"; caseId: string }
-  | { type: "contractor_unassigned"; caseId: string }
-  | { type: "property_linked"; caseId: string };
+  | { type: "contractor_declined"; caseId: string };
 
 type CaseSummaryRow = {
   reference_code: string | null;
