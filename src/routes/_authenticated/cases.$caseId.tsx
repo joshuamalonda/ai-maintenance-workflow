@@ -225,6 +225,7 @@ function CaseDetail() {
 
         <aside className="space-y-5">
           <LinkedPropertyPanel caseRecord={data} />
+          <CaseWorkflowPanel caseRecord={data} />
           <AssignContractorPanel caseRecord={data} />
           <div className="rounded-lg border border-border bg-surface p-5">
             <h2 className="text-sm font-semibold text-ink">Case information</h2>
@@ -233,24 +234,15 @@ function CaseDetail() {
               <Field label="Property address" value={data.property_address} />
               <Field label="Issue category" value={data.issue_category} />
               <Field label="Urgency" value={data.urgency} />
-              {data.priority && <Field label="Priority" value={data.priority} />}
               <Field label="Status" value={statusLabels[data.status] ?? data.status} />
               <Field label="Channel" value={channelLabel(channel)} />
               {data.preferred_language && (
                 <Field label="Preferred language" value={data.preferred_language} />
               )}
-              {data.contractor_required != null && (
-                <Field label="Contractor required" value={data.contractor_required ? "Yes" : "No"} />
-              )}
               {isPhone && data.call_duration_secs != null && (
                 <Field label="Call duration" value={`${data.call_duration_secs}s`} />
               )}
-              {isPhone && data.call_sid && <Field label="Call reference" value={data.call_sid} />}
-              {data.conversation_id && (
-                <Field label="Conversation ID" value={data.conversation_id} />
-              )}
               <Field label="Reported" value={new Date(data.created_at).toLocaleString("en-GB")} />
-              <Field label="Created at" value={new Date(data.created_at).toLocaleString("en-GB")} />
               <Field
                 label="Last updated"
                 value={new Date(data.updated_at).toLocaleString("en-GB")}
@@ -259,8 +251,25 @@ function CaseDetail() {
             <div className="mt-4">
               <CategoryTag category={data.issue_category} />
             </div>
+            {(data.call_sid || data.conversation_id || data.priority) && (
+              <details className="mt-4 border-t border-border pt-3">
+                <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                  Technical details
+                </summary>
+                <dl className="mt-1">
+                  {data.priority && <Field label="AI priority" value={data.priority} />}
+                  {isPhone && data.call_sid && (
+                    <Field label="Call reference" value={data.call_sid} />
+                  )}
+                  {data.conversation_id && (
+                    <Field label="Conversation ID" value={data.conversation_id} />
+                  )}
+                </dl>
+              </details>
+            )}
           </div>
         </aside>
+
       </div>
     </div>
   );
