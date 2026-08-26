@@ -1,8 +1,12 @@
 // Server-only helper for sending outbound SMS through Telnyx.
-// Uses the existing TELNYX_API_KEY secret and the Ovelo SMS sender number
-// (stored as TELNYX_SMS_SENDER). Never imported by client code.
+// Uses the existing TELNYX_API_KEY secret and the approved alphanumeric
+// sender ID "OVELO" attached to the "Ovelo SMS" messaging profile.
+// Never imported by client code.
 
 const TELNYX_MESSAGES_API = "https://api.telnyx.com/v2/messages";
+
+// Alphanumeric sender ID configured on the Ovelo SMS messaging profile.
+const OVELO_SENDER_ID = "OVELO";
 
 // E.164: optional "+" then 6-15 digits.
 const E164 = /^\+?[1-9]\d{5,14}$/;
@@ -25,7 +29,8 @@ export function isValidE164(phone: string): boolean {
 }
 
 /**
- * Sends a single outbound SMS via Telnyx.
+ * Sends a single outbound SMS via Telnyx using the "OVELO" alphanumeric
+ * sender ID.
  *
  * @param recipient E.164 phone number (e.g. "+447700900000")
  * @param body      Message body (UTF-8, <= 1600 chars per Telnyx limit)
@@ -35,13 +40,9 @@ export async function sendTelnyxSms(
   body: string,
 ): Promise<SendSmsResult | SendSmsError> {
   const apiKey = process.env["TELNYX_API_KEY"];
-  const sender = process.env["TELNYX_SMS_SENDER"];
 
   if (!apiKey) {
     return { error: "TELNYX_API_KEY is not configured on the server." };
-  }
-  if (!sender) {
-    return { error: "TELNYX_SMS_SENDER is not configured on the server." };
   }
 
   const to = recipient.trim();
@@ -61,7 +62,7 @@ export async function sendTelnyxSms(
         Accept: "application/json",
       },
       body: JSON.stringify({
-        from: sender,
+        from: OVELO_SENDER_ID,
         to,
         text,
       }),
