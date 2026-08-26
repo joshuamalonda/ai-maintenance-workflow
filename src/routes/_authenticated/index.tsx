@@ -134,6 +134,66 @@ function CaseRow({ c }: { c: MaintenanceCase }) {
   );
 }
 
+function TestSmsCard() {
+  const send = useServerFn(sendTestSms);
+  const [to, setTo] = useState("");
+  const [status, setStatus] = useState<{ kind: "idle" | "loading" | "ok" | "error"; msg?: string }>(
+    { kind: "idle" },
+  );
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus({ kind: "loading" });
+    try {
+      const res = await send({ data: { to } });
+      setStatus({ kind: "ok", msg: `Sent — SID ${res.sid} (${res.status})` });
+      setTo("");
+    } catch (err) {
+      setStatus({ kind: "error", msg: err instanceof Error ? err.message : "Failed to send" });
+    }
+  }
+
+  return (
+    <section className="mb-8 rounded-lg border border-dashed border-border bg-surface p-5">
+      <h2 className="text-sm font-semibold text-ink">Twilio SMS connection test</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Temporary control. Sends a single test SMS from your Twilio number.
+      </p>
+      <form onSubmit={onSubmit} className="mt-4 flex flex-wrap items-end gap-3">
+        <label className="min-w-[220px] flex-1">
+          <span className="mb-1 block font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+            Recipient (E.164)
+          </span>
+          <input
+            type="tel"
+            inputMode="tel"
+            placeholder="+447700900000"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+            pattern="^\+\d{8,15}$"
+            required
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-ink outline-none focus:border-primary"
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={status.kind === "loading" || !to}
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+        >
+          <Send className="size-4" />
+          {status.kind === "loading" ? "Sending…" : "Send test SMS"}
+        </button>
+      </form>
+      {status.kind === "ok" && (
+        <p className="mt-3 text-xs text-primary">{status.msg}</p>
+      )}
+      {status.kind === "error" && (
+        <p className="mt-3 text-xs text-critical">{status.msg}</p>
+      )}
+    </section>
+  );
+}
+
 function Dashboard() {
   useCasesRealtime();
   const { data: cases } = useSuspenseQuery(casesQuery);
