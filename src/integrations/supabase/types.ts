@@ -19,6 +19,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          notification_phone: string | null
           slug: string
           updated_at: string
         }
@@ -26,6 +27,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          notification_phone?: string | null
           slug: string
           updated_at?: string
         }
@@ -33,6 +35,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          notification_phone?: string | null
           slug?: string
           updated_at?: string
         }

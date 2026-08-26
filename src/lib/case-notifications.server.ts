@@ -245,3 +245,119 @@ export async function notifyContractorAppointmentConfirmed(
     console.error("[case-notifications] contractor appointment SMS unexpected failure", err);
   }
 }
+
+// ---------------------------------------------------------------------------
+// Agency notifications
+//
+// The agency (property manager) receives an SMS at meaningful workflow
+// milestones. Every send is best-effort: failures are logged and swallowed so
+// they can never roll back or block the underlying case/status update.
+// Channel-agnostic by design — an email transport can be added inside
+// `deliverAgencyNotification` without touching any call site.
+// ---------------------------------------------------------------------------
+
+export type AgencyEvent =
+  | { type: "case_created"; caseId: string }
+  | { type: "contractor_assigned"; caseId: string }
+  | { type: "contractor_accepted"; caseId: string; appointmentAt?: string | null }
+  | { type: "contractor_declined"; caseId: string }
+  | { type: "contractor_unassigned"; caseId: string };
+
+type CaseSummaryRow = {
+  reference_code: string | null;
+  property_address: string | null;
+  issue_description: string | null;
+  issue_category: string | null;
+  ai_summary: string | null;
+  urgency: string | null;
+  contractor: { name: string | null } | null;
+};
+
+function summarise(row: CaseSummaryRow) {
+  const issue = (row.ai_summary ?? row.issue_description ?? row.issue_category ?? "maintenance issue")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 240);
+  return {
+    reference: row.reference_code ?? "case",
+    address: row.property_address ?? "the property",
+    issue,
+    urgency: row.urgency ?? null,
+    contractorName: row.contractor?.name ?? null,
+  };
+}
+
+function formatWhen(iso: string): string {
+  const when = new Date(iso);
+  const date = when.toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: "Europe/London",
+  });
+  const time = when.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/London",
+  });
+  return `${date} at ${time}`;
+}
+
+/** Single delivery point for agency notifications (SMS today, email later). */
+async function deliverAgencyNotification(agencyId: string, body: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: agency, error } = await supabaseAdmin
+    .from("agencies")
+    .select("notification_phone")
+    .eq("id", agencyId)
+    .maybeSingle();
+  if (error || !agency) return;
+  const phone = (agency as { notification_phone: string | null }).notification_phone;
+  if (!phone) return;
+  await trySend("agency", phone, body);
+}
+
+/** Sends the agency the SMS for a workflow milestone. Never throws. */
+export async function notifyAgencyEvent(agencyId: string, event: AgencyEvent): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("maintenance_cases")
+      .select(
+        "reference_code, property_address, issue_description, issue_category, ai_summary, urgency, contractor:contractors(name)",
+      )
+      .eq("id", event.caseId)
+      .eq("agency_id", agencyId)
+      .maybeSingle();
+    if (error || !data) return;
+
+    const s = summarise(data as unknown as CaseSummaryRow);
+    let body: string;
+
+    switch (event.type) {
+      case "case_created":
+        body = `OVELO: new maintenance case ${s.reference}. ${s.address}. Issue: ${s.issue}.${
+          s.urgency ? ` Urgency: ${s.urgency}.` : ""
+        }`;
+        break;
+      case "contractor_assigned":
+        body = `OVELO: contractor ${s.contractorName ?? "assigned"} has been assigned to ${s.reference}. ${s.address}. Issue: ${s.issue}.`;
+        break;
+      case "contractor_accepted":
+        body = `OVELO: ${s.contractorName ?? "The contractor"} accepted job ${s.reference}.${
+          event.appointmentAt ? ` Appointment: ${formatWhen(event.appointmentAt)}.` : ""
+        }`;
+        break;
+      case "contractor_declined":
+        body = `OVELO: ${s.contractorName ?? "The contractor"} cannot take job ${s.reference}. ${s.address}. Please assign another contractor.`;
+        break;
+      case "contractor_unassigned":
+        body = `OVELO: the contractor assignment for ${s.reference} has been removed. ${s.address}.`;
+        break;
+    }
+
+    await deliverAgencyNotification(agencyId, body);
+  } catch (err) {
+    console.error("[case-notifications] agency notification failed", err);
+  }
+}

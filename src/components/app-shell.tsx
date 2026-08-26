@@ -1,7 +1,7 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
-import { Building2, ClipboardList, LayoutGrid, Menu, Wrench, X } from "lucide-react";
+import { Building2, ClipboardList, LayoutGrid, Menu, Settings, Wrench, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { OveloWordmark } from "@/components/ovelo-logo";
 
@@ -12,11 +12,24 @@ const nav = [
   { to: "/contractors", label: "Contractors", icon: Wrench, exact: false },
 ] as const;
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+const accountNav = [
+  { to: "/account", label: "Account", icon: Settings, exact: false },
+] as const;
+
+
+type NavItem = { to: string; label: string; icon: typeof LayoutGrid; exact: boolean };
+
+function NavLinks({
+  items = nav as readonly NavItem[],
+  onNavigate,
+}: {
+  items?: readonly NavItem[];
+  onNavigate?: () => void;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="space-y-0.5">
-      {nav.map((item) => {
+      {items.map((item) => {
         const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
         return (
           <Link
@@ -48,9 +61,12 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         </p>
         <NavLinks onNavigate={onNavigate} />
       </div>
-      <p className="px-3 text-[11px] leading-relaxed text-muted-foreground">
-        Ovelo Technologies
-      </p>
+      <div className="border-t border-border pt-3">
+        <NavLinks items={accountNav as readonly NavItem[]} onNavigate={onNavigate} />
+        <p className="mt-3 px-3 text-[11px] leading-relaxed text-muted-foreground">
+          Ovelo Technologies
+        </p>
+      </div>
     </div>
   );
 }

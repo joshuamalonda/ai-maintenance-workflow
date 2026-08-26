@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { AlertTriangle, ClipboardList, Clock, Inbox } from "lucide-react";
+import { ClipboardList } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { listCases, type MaintenanceCase } from "@/lib/cases.functions";
 import { UrgencyBadge, statusLabels } from "@/components/case-badges";
@@ -136,24 +136,6 @@ function Dashboard() {
   const { data: cases } = useSuspenseQuery(casesQuery);
 
   const active = cases.filter((c) => c.status !== "completed");
-  const emergency = active.filter((c) => c.urgency === "critical");
-  const awaiting = cases.filter((c) => c.status === "needs_attention");
-
-  const responded = cases.filter((c) => c.status !== "needs_attention");
-  const avgHours = responded.length
-    ? responded.reduce(
-        (sum, c) =>
-          sum + (new Date(c.updated_at).getTime() - new Date(c.created_at).getTime()) / 3_600_000,
-        0,
-      ) / responded.length
-    : null;
-  const avgLabel =
-    avgHours == null
-      ? "—"
-      : avgHours < 1
-        ? `${Math.max(1, Math.round(avgHours * 60))}m`
-        : `${avgHours.toFixed(1)}h`;
-
   const latest = [...cases]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 10);
@@ -168,25 +150,12 @@ function Dashboard() {
         </p>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <StatCard
           label="Active cases"
           value={String(active.length)}
           note="Open and not yet completed"
           icon={ClipboardList}
-        />
-        <StatCard
-          label="Emergency cases"
-          value={String(emergency.length)}
-          note="Critical urgency, still open"
-          icon={AlertTriangle}
-          emphasis={emergency.length > 0}
-        />
-        <StatCard
-          label="Awaiting review"
-          value={String(awaiting.length)}
-          note="Needs a human decision"
-          icon={Inbox}
         />
       </section>
 
