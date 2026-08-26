@@ -242,6 +242,7 @@ export const setContractorResponse = createServerFn({ method: "POST" })
       .object({
         caseId: z.string().uuid(),
         response: z.enum(["accepted", "declined"]),
+        appointmentAt: z.string().datetime({ offset: true }).optional(),
       })
       .parse(input),
   )
@@ -262,11 +263,27 @@ export const setContractorResponse = createServerFn({ method: "POST" })
       .update({
         contractor_response_status: data.response,
         contractor_responded_at: respondedAt,
+        ...(data.response === "accepted" && data.appointmentAt
+          ? { appointment_at: data.appointmentAt }
+          : {}),
       })
       .eq("id", row.id)
       .eq("agency_id", row.agency_id)
       .eq("contractor_id", row.contractor_id);
     if (updateError) throw new Error(updateError.message);
+
+    if (data.response === "accepted" && data.appointmentAt) {
+      // Best-effort: SMS failure must never undo the saved acceptance.
+      const { notifyContractorAppointmentConfirmed } = await import(
+        "@/lib/case-notifications.server"
+      );
+      await notifyContractorAppointmentConfirmed({
+        caseId: row.id,
+        agencyId: row.agency_id,
+        contractorId: row.contractor_id,
+        appointmentAt: data.appointmentAt,
+      }).catch((err) => console.error("[cases] appointment SMS failed", err));
+    }
 
     return { caseId: row.id, response: data.response, respondedAt };
   });
