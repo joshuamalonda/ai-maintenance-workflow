@@ -46,12 +46,17 @@ export async function matchCaseToProperty(input: {
 
     // A case address matches either the stored address alone, or the stored
     // address plus its postcode (intake commonly sends "<address>, <postcode>").
+    // Compared with spaces removed too, so "HX1 4LE" and "HX14LE" both match.
+    const compact = (v: string) => v.replace(/\s+/g, "");
+    const targetCompact = compact(target);
     const candidates = data.filter((p) => {
       const address = normaliseAddress(p.address);
       if (!address) return false;
-      if (address === target) return true;
       const postcode = normaliseAddress(p.postcode);
-      return Boolean(postcode) && `${address} ${postcode}` === target;
+      const keys = [address, postcode ? `${address} ${postcode}` : null].filter(
+        Boolean,
+      ) as string[];
+      return keys.some((k) => k === target || compact(k) === targetCompact);
     });
     if (candidates.length === 0) return { matched: false, reason: "no-candidates" };
     if (candidates.length > 1) return { matched: false, reason: "ambiguous" };
