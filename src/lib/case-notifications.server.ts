@@ -280,6 +280,80 @@ export async function notifyContractorAppointmentConfirmed(
   }
 }
 
+export type NotifyAppointmentPartiesInput = {
+  caseId: string;
+  agencyId: string;
+  /** ISO timestamp of the confirmed appointment. */
+  appointmentAt: string;
+};
+
+/**
+ * Sends the tenant and landlord the final appointment confirmation. Requires a
+ * linked property, the only source of verified contact numbers. Best-effort:
+ * every failure is logged and swallowed.
+ */
+export async function notifyAppointmentParties(
+  input: NotifyAppointmentPartiesInput,
+): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: caseRow, error } = await supabaseAdmin
+      .from("maintenance_cases")
+      .select(
+        "reference_code, property_address, property_id, contractor:contractors(name, company)",
+      )
+      .eq("id", input.caseId)
+      .eq("agency_id", input.agencyId)
+      .maybeSingle();
+    if (error || !caseRow) return;
+
+    const row = caseRow as unknown as {
+      reference_code: string | null;
+      property_address: string | null;
+      property_id: string | null;
+      contractor: { name: string | null; company: string | null } | null;
+    };
+    if (!row.property_id) return;
+
+    const { data: property } = await supabaseAdmin
+      .from("properties")
+      .select("address, tenant:tenants(phone), landlord:landlords(phone)")
+      .eq("id", row.property_id)
+      .eq("agency_id", input.agencyId)
+      .maybeSingle();
+    if (!property) return;
+
+    const p = property as unknown as {
+      address: string | null;
+      tenant: { phone: string | null } | null;
+      landlord: { phone: string | null } | null;
+    };
+
+    const reference = row.reference_code ?? "your case";
+    const address = p.address ?? row.property_address ?? "the property";
+    const when = formatWhen(input.appointmentAt);
+    const contractor =
+      [row.contractor?.name, row.contractor?.company].filter(Boolean).join(", ") ||
+      "a contractor";
+
+    await trySend(
+      "tenant",
+      p.tenant?.phone ?? null,
+      `Your maintenance appointment is confirmed. ${contractor} will attend ${address} on ${when}. Ref: ${reference}. Please make sure someone can provide access.`,
+    );
+    await trySend(
+      "landlord",
+      p.landlord?.phone ?? null,
+      `Appointment confirmed for ${address}. ${contractor} will attend on ${when}. Ref: ${reference}.`,
+    );
+  } catch (err) {
+    console.error("[case-notifications] appointment parties SMS failed", err);
+  }
+}
+
+
+
 // ---------------------------------------------------------------------------
 // Agency notifications
 //
@@ -294,9 +368,7 @@ export type AgencyEvent =
   | { type: "case_created"; caseId: string }
   | { type: "contractor_assigned"; caseId: string }
   | { type: "contractor_accepted"; caseId: string; appointmentAt?: string | null }
-  | { type: "contractor_declined"; caseId: string }
-  | { type: "contractor_unassigned"; caseId: string }
-  | { type: "property_linked"; caseId: string };
+  | { type: "contractor_declined"; caseId: string };
 
 type CaseSummaryRow = {
   reference_code: string | null;
@@ -385,12 +457,6 @@ export async function notifyAgencyEvent(agencyId: string, event: AgencyEvent): P
         break;
       case "contractor_declined":
         body = `OVELO: ${s.contractorName ?? "The contractor"} cannot take job ${s.reference}. ${s.address}. Please assign another contractor.`;
-        break;
-      case "contractor_unassigned":
-        body = `OVELO: the contractor assignment for ${s.reference} has been removed. ${s.address}.`;
-        break;
-      case "property_linked":
-        body = `OVELO: case ${s.reference} has been linked to ${s.address}. Tenant and landlord have been notified. Issue: ${s.issue}.`;
         break;
     }
 

@@ -203,37 +203,20 @@ export const Route = createFileRoute("/api/public/cases")({
 
         // Post-insert, best-effort directory matching. Never affects the
         // intake result: failures leave property_id/tenant_id null.
+        // Tenant/landlord SMS is deliberately NOT sent here — the agency
+        // reviews the case and triggers notification explicitly in Ovelo.
         try {
           const { matchCaseToProperty } = await import("@/lib/matching.server");
-          const match = await matchCaseToProperty({
+          await matchCaseToProperty({
             caseId: (data as { id: string }).id,
             agencyId: endpoint.agencyId,
             propertyAddress: rest.property_address,
             tenantName: rest.tenant_name,
           });
-
-          // Confirmation SMS only when the case is linked to a real property,
-          // which is the only source of verified tenant/landlord numbers.
-          if (match.matched) {
-            const { notifyCaseCreated, claimCaseCreatedNotification } = await import(
-              "@/lib/case-notifications.server"
-            );
-            const claimed = await claimCaseCreatedNotification(
-              endpoint.agencyId,
-              (data as { id: string }).id,
-            );
-            if (claimed) {
-              await notifyCaseCreated({
-                agencyId: endpoint.agencyId,
-                propertyId: match.propertyId,
-                referenceCode: (data as { reference_code: string }).reference_code,
-                propertyAddress: rest.property_address,
-              });
-            }
-          }
         } catch {
           /* matching is advisory only */
         }
+
 
         // Best-effort agency milestone notification. Never affects intake.
         try {

@@ -271,6 +271,8 @@ export type Database = {
           id: string
           issue_category: string
           issue_description: string
+          landlord_decision: string | null
+          landlord_decision_at: string | null
           last_ai_action: string | null
           missing_information: string | null
           preferred_language: string | null
@@ -316,6 +318,8 @@ export type Database = {
           id?: string
           issue_category: string
           issue_description: string
+          landlord_decision?: string | null
+          landlord_decision_at?: string | null
           last_ai_action?: string | null
           missing_information?: string | null
           preferred_language?: string | null
@@ -361,6 +365,8 @@ export type Database = {
           id?: string
           issue_category?: string
           issue_description?: string
+          landlord_decision?: string | null
+          landlord_decision_at?: string | null
           last_ai_action?: string | null
           missing_information?: string | null
           preferred_language?: string | null
