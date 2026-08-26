@@ -11,6 +11,7 @@ import { ChannelBadge, channelLabel, normaliseChannel } from "@/components/chann
 import { CallRecordingPlayer } from "@/components/call-recording-player";
 import { LinkedPropertyPanel } from "@/components/link-property-panel";
 import { AssignContractorPanel } from "@/components/assign-contractor-panel";
+import { CaseWorkflowPanel } from "@/components/case-workflow-panel";
 
 const caseQuery = (id: string) =>
   queryOptions({
