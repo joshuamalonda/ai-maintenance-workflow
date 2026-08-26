@@ -14,6 +14,7 @@ import {
   getContractor,
   setContractorActive,
   unassignContractorFromProperty,
+  deleteAgencyContractor,
 } from "@/lib/contractors.functions";
 import { listProperties } from "@/lib/properties.functions";
 import { ContractorFormDialog } from "@/components/contractor-form-dialog";
