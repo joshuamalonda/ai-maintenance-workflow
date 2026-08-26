@@ -171,6 +171,9 @@ function Dashboard() {
         </p>
       </header>
 
+      {/* TEMP: Twilio outbound SMS connection test — remove after first real test. */}
+      <TestSmsCard />
+
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Active cases"
