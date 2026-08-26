@@ -213,6 +213,8 @@ export const assignCaseContractor = createServerFn({ method: "POST" })
         // Assigning starts a fresh response cycle; clearing resets it entirely.
         contractor_response_status: contractorId ? "pending" : null,
         contractor_responded_at: null,
+        // Work is now under way. Never re-open a case the agency has completed.
+        ...(contractorId && row.status !== "completed" ? { status: "in_progress" } : {}),
       })
       .eq("id", row.id)
       .eq("agency_id", row.agency_id);
@@ -222,20 +224,17 @@ export const assignCaseContractor = createServerFn({ method: "POST" })
     // assignment (contractorId set), never on unassignment, and can never fail
     // or undo the assignment itself.
     if (contractorId) {
-      const { notifyContractorAssigned } = await import("./case-notifications.server");
+      const { notifyContractorAssigned, notifyAgencyEvent } = await import(
+        "./case-notifications.server"
+      );
       await notifyContractorAssigned({
         agencyId: row.agency_id,
         caseId: row.id,
         contractorId,
       });
+      await notifyAgencyEvent(row.agency_id, { type: "contractor_assigned", caseId: row.id });
     }
 
-    // Best-effort agency milestone notification.
-    const { notifyAgencyEvent } = await import("./case-notifications.server");
-    await notifyAgencyEvent(row.agency_id, {
-      type: contractorId ? "contractor_assigned" : "contractor_unassigned",
-      caseId: row.id,
-    });
 
     return { caseId: row.id, contractorId, assignedAt };
   });
