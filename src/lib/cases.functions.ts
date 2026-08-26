@@ -325,7 +325,7 @@ export const setCaseStatus = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase
       .from("maintenance_cases")
-      .select("id, agency_id")
+      .select("id, agency_id, status")
       .eq("id", data.caseId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -338,6 +338,12 @@ export const setCaseStatus = createServerFn({ method: "POST" })
       .eq("id", row.id)
       .eq("agency_id", row.agency_id);
     if (updateError) throw new Error(updateError.message);
+
+    // Best-effort agency milestone: only on the transition into completed.
+    if (data.status === "completed" && row.status !== "completed") {
+      const { notifyAgencyEvent } = await import("./case-notifications.server");
+      await notifyAgencyEvent(row.agency_id, { type: "case_completed", caseId: row.id });
+    }
 
     return { caseId: row.id, status: data.status };
   });
@@ -433,6 +439,13 @@ export const setLandlordDecision = createServerFn({ method: "POST" })
       .eq("id", row.id)
       .eq("agency_id", row.agency_id);
     if (updateError) throw new Error(updateError.message);
+
+    // Best-effort agency milestone: only when the landlord takes it on
+    // themselves, which closes the case.
+    if (data.decision === "landlord_handling" && row.status !== "completed") {
+      const { notifyAgencyEvent } = await import("./case-notifications.server");
+      await notifyAgencyEvent(row.agency_id, { type: "landlord_handling", caseId: row.id });
+    }
 
     return { caseId: row.id, decision: data.decision };
   });

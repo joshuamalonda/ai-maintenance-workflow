@@ -368,7 +368,9 @@ export type AgencyEvent =
   | { type: "case_created"; caseId: string }
   | { type: "contractor_assigned"; caseId: string }
   | { type: "contractor_accepted"; caseId: string; appointmentAt?: string | null }
-  | { type: "contractor_declined"; caseId: string };
+  | { type: "contractor_declined"; caseId: string }
+  | { type: "landlord_handling"; caseId: string }
+  | { type: "case_completed"; caseId: string };
 
 type CaseSummaryRow = {
   reference_code: string | null;
@@ -457,6 +459,12 @@ export async function notifyAgencyEvent(agencyId: string, event: AgencyEvent): P
         break;
       case "contractor_declined":
         body = `OVELO: ${s.contractorName ?? "The contractor"} cannot take job ${s.reference}. ${s.address}. Please assign another contractor.`;
+        break;
+      case "landlord_handling":
+        body = `OVELO: the landlord is handling ${s.reference} themselves. ${s.address}. The case has been closed.`;
+        break;
+      case "case_completed":
+        body = `OVELO: case ${s.reference} has been marked complete. ${s.address}.`;
         break;
     }
 
