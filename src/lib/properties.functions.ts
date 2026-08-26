@@ -248,14 +248,34 @@ export const updateProperty = createServerFn({ method: "POST" })
     return { id: data.id };
   });
 
+/**
+ * Deletes a property owned by the caller's agency. Maintenance cases keep
+ * their history: they are simply unlinked first, since the case FKs are
+ * restrictive and cases must never be destroyed by a directory change.
+ */
 export const deleteProperty = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await (context.supabase as Client)
+    const supabase = context.supabase as Client;
+    const { data: row, error: findError } = await supabase
       .from("properties")
-      .delete()
-      .eq("id", data.id);
+      .select("id, agency_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (findError) throw new Error(findError.message);
+    if (!row) throw new Error("Property not found");
+    const agencyId = (row as { agency_id: string }).agency_id;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: unlinkError } = await supabaseAdmin
+      .from("maintenance_cases")
+      .update({ property_id: null, tenant_id: null })
+      .eq("property_id", data.id)
+      .eq("agency_id", agencyId);
+    if (unlinkError) throw new Error(unlinkError.message);
+
+    const { error } = await supabase.from("properties").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { id: data.id };
   });
