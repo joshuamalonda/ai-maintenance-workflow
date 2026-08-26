@@ -30,6 +30,15 @@ function parseElevenLabsHistory(value: string): HistoryEntry[] | null {
 }
 
 /**
+ * True for an unresolved template placeholder such as
+ * `{{system__conversation_history}}` that the assistant failed to interpolate.
+ * These must never be stored as a transcript: enrichment fetches the real one.
+ */
+export function isUnresolvedPlaceholder(value: string): boolean {
+  return /^\{\{[^}]*\}\}$/.test(value.trim());
+}
+
+/**
  * Converts any accepted transcript shape into the canonical
  * `"<role>: <text>"` newline-separated form. Only real conversational turns
  * survive: tool_requests, tool_results, system messages and metadata are
@@ -40,6 +49,7 @@ export function normaliseTranscript(value: unknown): string | null {
 
   let entries: HistoryEntry[] | null = null;
   if (typeof value === "string") {
+    if (isUnresolvedPlaceholder(value)) return null;
     entries = parseElevenLabsHistory(value);
     if (!entries) return value.slice(0, 100000) || null; // already plain text
   } else if (Array.isArray(value)) {

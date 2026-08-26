@@ -19,7 +19,12 @@ export function normaliseAddress(value: string | null | undefined): string {
 }
 
 export type MatchResult =
-  | { matched: true; propertyId: string; tenantId: string | null }
+  | {
+      matched: true;
+      propertyId: string;
+      tenantId: string | null;
+      landlordId: string | null;
+    }
   | { matched: false; reason: "no-address" | "no-candidates" | "ambiguous" | "error" };
 
 export async function matchCaseToProperty(input: {
@@ -35,11 +40,19 @@ export async function matchCaseToProperty(input: {
 
     const { data, error } = await supabaseAdmin
       .from("properties")
-      .select("id, address, tenant_id")
+      .select("id, address, postcode, tenant_id, landlord_id")
       .eq("agency_id", input.agencyId);
     if (error || !data) return { matched: false, reason: "error" };
 
-    const candidates = data.filter((p) => normaliseAddress(p.address) === target);
+    // A case address matches either the stored address alone, or the stored
+    // address plus its postcode (intake commonly sends "<address>, <postcode>").
+    const candidates = data.filter((p) => {
+      const address = normaliseAddress(p.address);
+      if (!address) return false;
+      if (address === target) return true;
+      const postcode = normaliseAddress(p.postcode);
+      return Boolean(postcode) && `${address} ${postcode}` === target;
+    });
     if (candidates.length === 0) return { matched: false, reason: "no-candidates" };
     if (candidates.length > 1) return { matched: false, reason: "ambiguous" };
 
@@ -51,7 +64,12 @@ export async function matchCaseToProperty(input: {
       .eq("agency_id", input.agencyId);
     if (updateError) return { matched: false, reason: "error" };
 
-    return { matched: true, propertyId: property.id, tenantId: property.tenant_id ?? null };
+    return {
+      matched: true,
+      propertyId: property.id,
+      tenantId: property.tenant_id ?? null,
+      landlordId: property.landlord_id ?? null,
+    };
   } catch {
     return { matched: false, reason: "error" };
   }

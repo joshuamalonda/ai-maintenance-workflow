@@ -6,6 +6,7 @@
 // bound to a TeXML application that cannot deliver call.* events.
 
 import { mirrorRecording } from "@/lib/telnyx.server";
+import { isUnresolvedPlaceholder } from "@/lib/channel";
 
 const TELNYX_API = "https://api.telnyx.com/v2";
 
@@ -279,8 +280,11 @@ export async function runEnrichment(apiKey: string): Promise<EnrichmentSummary> 
       }
     }
 
-    // 2. Transcript (only when we don't already have one).
-    if (conversationId && !row.transcript) {
+    // 2. Transcript (only when we don't already have a real one). An
+    // unresolved "{{...}}" placeholder counts as missing.
+    const storedTranscript =
+      row.transcript && !isUnresolvedPlaceholder(row.transcript) ? row.transcript : null;
+    if (conversationId && !storedTranscript) {
       const transcript = await fetchTranscript(conversationId, apiKey);
       if (transcript) patch["transcript"] = transcript;
     }
@@ -310,7 +314,7 @@ export async function runEnrichment(apiKey: string): Promise<EnrichmentSummary> 
       }
     }
 
-    const hasTranscript = Boolean(row.transcript ?? patch["transcript"]);
+    const hasTranscript = Boolean(storedTranscript ?? patch["transcript"]);
     const hasRecording = Boolean(row.call_recording_url ?? patch["call_recording_url"]);
     const attempts = row.enrichment_attempts + 1;
 
