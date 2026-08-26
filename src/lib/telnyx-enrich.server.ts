@@ -279,8 +279,11 @@ export async function runEnrichment(apiKey: string): Promise<EnrichmentSummary> 
       }
     }
 
-    // 2. Transcript (only when we don't already have one).
-    if (conversationId && !row.transcript) {
+    // 2. Transcript (only when we don't already have a real one). An
+    // unresolved "{{...}}" placeholder counts as missing.
+    const storedTranscript =
+      row.transcript && !isUnresolvedPlaceholder(row.transcript) ? row.transcript : null;
+    if (conversationId && !storedTranscript) {
       const transcript = await fetchTranscript(conversationId, apiKey);
       if (transcript) patch["transcript"] = transcript;
     }
