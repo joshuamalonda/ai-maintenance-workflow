@@ -440,6 +440,13 @@ export const setLandlordDecision = createServerFn({ method: "POST" })
       .eq("agency_id", row.agency_id);
     if (updateError) throw new Error(updateError.message);
 
+    // Best-effort agency milestone: only when the landlord takes it on
+    // themselves, which closes the case.
+    if (data.decision === "landlord_handling" && row.status !== "completed") {
+      const { notifyAgencyEvent } = await import("./case-notifications.server");
+      await notifyAgencyEvent(row.agency_id, { type: "landlord_handling", caseId: row.id });
+    }
+
     return { caseId: row.id, decision: data.decision };
   });
 
