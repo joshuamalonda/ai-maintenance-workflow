@@ -109,11 +109,16 @@ export function AssignContractorPanel({ caseRecord }: { caseRecord: CaseDetail }
               )}
             </div>
           )}
+          {appointmentAt && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Appointment: {new Date(appointmentAt).toLocaleString("en-GB")}
+            </p>
+          )}
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
-              disabled={responseMutation.isPending || responseStatus === "accepted"}
-              onClick={() => responseMutation.mutate("accepted")}
+              disabled={responseMutation.isPending}
+              onClick={() => setConfirmOpen(true)}
               className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-ink hover:border-primary hover:bg-brand-tint disabled:opacity-50"
             >
               Accept job
@@ -121,7 +126,7 @@ export function AssignContractorPanel({ caseRecord }: { caseRecord: CaseDetail }
             <button
               type="button"
               disabled={responseMutation.isPending || responseStatus === "declined"}
-              onClick={() => responseMutation.mutate("declined")}
+              onClick={() => responseMutation.mutate({ response: "declined" })}
               className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-destructive hover:border-destructive disabled:opacity-50"
             >
               Can't take job
@@ -135,6 +140,69 @@ export function AssignContractorPanel({ caseRecord }: { caseRecord: CaseDetail }
               {(responseMutation.error as Error).message}
             </p>
           )}
+
+          <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Confirm appointment</DialogTitle>
+                <DialogDescription>
+                  Set the date and time the contractor will attend. They receive a confirmation
+                  SMS.
+                </DialogDescription>
+              </DialogHeader>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!date || !time) return;
+                  const when = new Date(`${date}T${time}`);
+                  if (Number.isNaN(when.getTime())) return;
+                  responseMutation.mutate({
+                    response: "accepted",
+                    appointmentAt: when.toISOString(),
+                  });
+                }}
+                className="space-y-3"
+              >
+                <div>
+                  <label className={labelClass} htmlFor="appointment-date">
+                    Appointment date
+                  </label>
+                  <input
+                    id="appointment-date"
+                    type="date"
+                    required
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="appointment-time">
+                    Appointment time
+                  </label>
+                  <input
+                    id="appointment-time"
+                    type="time"
+                    required
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <DialogFooter>
+                  <button
+                    type="submit"
+                    disabled={responseMutation.isPending || !date || !time}
+                    className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+                  >
+                    {responseMutation.isPending ? "Confirming…" : "Confirm Job"}
+                  </button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      ) : (
         </div>
       ) : (
         <p className="mt-2 text-sm text-muted-foreground">
