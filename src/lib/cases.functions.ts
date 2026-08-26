@@ -214,6 +214,18 @@ export const assignCaseContractor = createServerFn({ method: "POST" })
       .eq("agency_id", row.agency_id);
     if (updateError) throw new Error(updateError.message);
 
+    // Best-effort SMS to the newly assigned contractor. Only fires on a fresh
+    // assignment (contractorId set), never on unassignment, and can never fail
+    // or undo the assignment itself.
+    if (contractorId) {
+      const { notifyContractorAssigned } = await import("./case-notifications.server");
+      await notifyContractorAssigned({
+        agencyId: row.agency_id,
+        caseId: row.id,
+        contractorId,
+      });
+    }
+
     return { caseId: row.id, contractorId, assignedAt };
   });
 
