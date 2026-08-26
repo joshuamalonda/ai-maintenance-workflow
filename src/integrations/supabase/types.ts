@@ -257,6 +257,7 @@ export type Database = {
           call_recording_url: string | null
           call_sid: string | null
           caller_number: string | null
+          case_created_notified_at: string | null
           communication_channel: string
           contractor_id: string | null
           contractor_required: boolean | null
@@ -301,6 +302,7 @@ export type Database = {
           call_recording_url?: string | null
           call_sid?: string | null
           caller_number?: string | null
+          case_created_notified_at?: string | null
           communication_channel?: string
           contractor_id?: string | null
           contractor_required?: boolean | null
@@ -345,6 +347,7 @@ export type Database = {
           call_recording_url?: string | null
           call_sid?: string | null
           caller_number?: string | null
+          case_created_notified_at?: string | null
           communication_channel?: string
           contractor_id?: string | null
           contractor_required?: boolean | null

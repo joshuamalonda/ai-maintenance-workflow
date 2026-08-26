@@ -215,13 +215,21 @@ export const Route = createFileRoute("/api/public/cases")({
           // Confirmation SMS only when the case is linked to a real property,
           // which is the only source of verified tenant/landlord numbers.
           if (match.matched) {
-            const { notifyCaseCreated } = await import("@/lib/case-notifications.server");
-            await notifyCaseCreated({
-              agencyId: endpoint.agencyId,
-              propertyId: match.propertyId,
-              referenceCode: (data as { reference_code: string }).reference_code,
-              propertyAddress: rest.property_address,
-            });
+            const { notifyCaseCreated, claimCaseCreatedNotification } = await import(
+              "@/lib/case-notifications.server"
+            );
+            const claimed = await claimCaseCreatedNotification(
+              endpoint.agencyId,
+              (data as { id: string }).id,
+            );
+            if (claimed) {
+              await notifyCaseCreated({
+                agencyId: endpoint.agencyId,
+                propertyId: match.propertyId,
+                referenceCode: (data as { reference_code: string }).reference_code,
+                propertyAddress: rest.property_address,
+              });
+            }
           }
         } catch {
           /* matching is advisory only */
