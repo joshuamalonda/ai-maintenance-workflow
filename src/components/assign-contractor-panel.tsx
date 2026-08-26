@@ -2,11 +2,25 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   assignCaseContractor,
   setContractorResponse,
   listPropertyContractorsForCase,
   type CaseDetail,
 } from "@/lib/cases.functions";
+
+const inputClass =
+  "w-full rounded-md border border-input bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-muted-foreground focus:border-primary";
+
+const labelClass =
+  "mb-1.5 block font-mono text-[10px] uppercase tracking-[0.16em] text-muted-foreground";
 
 const responseLabels: Record<string, string> = {
   pending: "Awaiting contractor response",
