@@ -60,6 +60,32 @@ export async function notifyCaseCreated(input: NotifyCaseCreatedInput): Promise<
     const address = row.address ?? input.propertyAddress ?? "your property";
     const ref = input.referenceCode;
 
+    // Fetch the case issue for the landlord SMS. Best-effort: a lookup failure
+    // falls back to a generic summary so the notification still sends.
+    let issueSummary = "maintenance issue";
+    try {
+      const { data: caseRow } = await supabaseAdmin
+        .from("maintenance_cases")
+        .select("ai_summary, issue_description, issue_category")
+        .eq("reference_code", ref)
+        .eq("agency_id", input.agencyId)
+        .maybeSingle();
+      if (caseRow) {
+        const c = caseRow as {
+          ai_summary: string | null;
+          issue_description: string | null;
+          issue_category: string | null;
+        };
+        issueSummary =
+          (c.ai_summary ?? c.issue_description ?? c.issue_category ?? "maintenance issue")
+            .replace(/\s+/g, " ")
+            .trim()
+            .slice(0, 300) || "maintenance issue";
+      }
+    } catch {
+      /* keep default summary */
+    }
+
     await trySend(
       "tenant",
       row.tenant?.phone ?? null,
@@ -68,7 +94,7 @@ export async function notifyCaseCreated(input: NotifyCaseCreatedInput): Promise<
     await trySend(
       "landlord",
       row.landlord?.phone ?? null,
-      `A maintenance request has been logged for ${address}. Reference ${ref}.`,
+      `Maintenance issue reported at ${address}. Ref: ${ref}. Issue: ${issueSummary}. A contractor can be assigned to resolve this. If you would like to handle the issue yourself, please contact the agency.`,
     );
   } catch (err) {
     console.error("[case-notifications] unexpected failure", err);
