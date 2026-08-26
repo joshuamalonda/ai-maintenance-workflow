@@ -7,7 +7,7 @@ import type { Database } from "@/integrations/supabase/types";
 export type MaintenanceCase = Database["public"]["Tables"]["maintenance_cases"]["Row"];
 
 const CASE_COLUMNS =
-  "id, reference_code, tenant_name, property_address, issue_category, issue_description, urgency, status, ai_summary, ai_confidence, last_ai_action, source_channel, communication_channel, created_at, updated_at, preferred_language, priority, contractor_required, recommended_action, troubleshooting, missing_information, transcript, conversation_id, call_sid, call_control_id, call_duration_secs, call_recording_url, contractor_response_status, contractor_responded_at";
+  "id, reference_code, tenant_name, property_address, issue_category, issue_description, urgency, status, ai_summary, ai_confidence, last_ai_action, source_channel, communication_channel, created_at, updated_at, preferred_language, priority, contractor_required, recommended_action, troubleshooting, missing_information, transcript, conversation_id, call_sid, call_control_id, call_duration_secs, call_recording_url, contractor_response_status, contractor_responded_at, appointment_at, case_created_notified_at, landlord_decision, landlord_decision_at";
 
 export const listCases = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
