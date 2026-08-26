@@ -284,7 +284,7 @@ export const setContractorResponse = createServerFn({ method: "POST" })
 
     if (data.response === "accepted" && data.appointmentAt) {
       // Best-effort: SMS failure must never undo the saved acceptance.
-      const { notifyContractorAppointmentConfirmed } = await import(
+      const { notifyContractorAppointmentConfirmed, notifyAppointmentParties } = await import(
         "@/lib/case-notifications.server"
       );
       await notifyContractorAppointmentConfirmed({
@@ -293,6 +293,12 @@ export const setContractorResponse = createServerFn({ method: "POST" })
         contractorId: row.contractor_id,
         appointmentAt: data.appointmentAt,
       }).catch((err) => console.error("[cases] appointment SMS failed", err));
+      // Tenant and landlord get the same final confirmation.
+      await notifyAppointmentParties({
+        caseId: row.id,
+        agencyId: row.agency_id,
+        appointmentAt: data.appointmentAt,
+      }).catch((err) => console.error("[cases] appointment party SMS failed", err));
     }
 
     const { notifyAgencyEvent } = await import("./case-notifications.server");
@@ -304,3 +310,130 @@ export const setContractorResponse = createServerFn({ method: "POST" })
 
     return { caseId: row.id, response: data.response, respondedAt };
   });
+
+const STATUSES = ["needs_attention", "in_progress", "completed"] as const;
+
+/**
+ * Sets the workflow status of a case. Ownership is verified through the
+ * caller's RLS-scoped client before the privileged update runs.
+ */
+export const setCaseStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ caseId: z.string().uuid(), status: z.enum(STATUSES) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("maintenance_cases")
+      .select("id, agency_id")
+      .eq("id", data.caseId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Case not found");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: updateError } = await supabaseAdmin
+      .from("maintenance_cases")
+      .update({ status: data.status })
+      .eq("id", row.id)
+      .eq("agency_id", row.agency_id);
+    if (updateError) throw new Error(updateError.message);
+
+    return { caseId: row.id, status: data.status };
+  });
+
+/**
+ * The agency's explicit "open this case" action: the human gate before any
+ * tenant/landlord SMS goes out. Requires a linked property (the only source of
+ * verified contact numbers) and can only ever notify once, enforced by the
+ * database-level claim on case_created_notified_at.
+ */
+export const openCaseAndNotify = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ caseId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("maintenance_cases")
+      .select("id, agency_id, property_id, reference_code, property_address, status")
+      .eq("id", data.caseId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Case not found");
+    if (!row.property_id) {
+      throw new Error("Link this case to a property before opening and notifying");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (row.status === "needs_attention") {
+      const { error: updateError } = await supabaseAdmin
+        .from("maintenance_cases")
+        .update({ status: "in_progress" })
+        .eq("id", row.id)
+        .eq("agency_id", row.agency_id);
+      if (updateError) throw new Error(updateError.message);
+    }
+
+    // Notifications are entirely best-effort: an SMS failure must never
+    // prevent the case from being opened.
+    let notified = false;
+    try {
+      const { notifyCaseCreated, claimCaseCreatedNotification } = await import(
+        "./case-notifications.server"
+      );
+      notified = await claimCaseCreatedNotification(row.agency_id, row.id);
+      if (notified) {
+        await notifyCaseCreated({
+          agencyId: row.agency_id,
+          propertyId: row.property_id,
+          referenceCode: row.reference_code ?? row.id,
+          propertyAddress: row.property_address ?? null,
+        });
+      }
+    } catch (err) {
+      console.error("[cases] open-and-notify failed", err);
+    }
+
+    return { caseId: row.id, notified };
+  });
+
+/**
+ * Records the landlord's decision: handle the repair themselves, or have the
+ * agency send a contractor. Choosing "landlord handling" closes the case.
+ */
+export const setLandlordDecision = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        caseId: z.string().uuid(),
+        decision: z.enum(["landlord_handling", "contractor"]).nullable(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("maintenance_cases")
+      .select("id, agency_id, status")
+      .eq("id", data.caseId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Case not found");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: updateError } = await supabaseAdmin
+      .from("maintenance_cases")
+      .update({
+        landlord_decision: data.decision,
+        landlord_decision_at: data.decision ? new Date().toISOString() : null,
+        ...(data.decision === "landlord_handling" ? { status: "completed" } : {}),
+        ...(data.decision === "contractor" && row.status === "needs_attention"
+          ? { status: "in_progress" }
+          : {}),
+      })
+      .eq("id", row.id)
+      .eq("agency_id", row.agency_id);
+    if (updateError) throw new Error(updateError.message);
+
+    return { caseId: row.id, decision: data.decision };
+  });
+
