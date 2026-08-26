@@ -1,11 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { AlertTriangle, ClipboardList, Clock, Inbox, Send } from "lucide-react";
+import { AlertTriangle, ClipboardList, Clock, Inbox } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useState } from "react";
 import { listCases, type MaintenanceCase } from "@/lib/cases.functions";
-import { sendTestSms } from "@/lib/twilio.functions";
 import { UrgencyBadge, statusLabels } from "@/components/case-badges";
 import { useCasesRealtime } from "@/hooks/use-cases-realtime";
 
