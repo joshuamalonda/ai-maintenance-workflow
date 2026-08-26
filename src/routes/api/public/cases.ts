@@ -209,6 +209,7 @@ export const Route = createFileRoute("/api/public/cases")({
             caseId: (data as { id: string }).id,
             agencyId: endpoint.agencyId,
             propertyAddress: rest.property_address,
+            tenantName: rest.tenant_name,
           });
 
           // Confirmation SMS only when the case is linked to a real property,
