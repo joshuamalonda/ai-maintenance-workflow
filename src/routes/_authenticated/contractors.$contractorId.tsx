@@ -17,6 +17,7 @@ import {
 } from "@/lib/contractors.functions";
 import { listProperties } from "@/lib/properties.functions";
 import { ContractorFormDialog } from "@/components/contractor-form-dialog";
+import { DeleteRecordButton } from "@/components/delete-record-button";
 
 const contractorQuery = (id: string) =>
   queryOptions({
@@ -152,6 +153,14 @@ function ContractorDetailPage() {
                 Edit contractor
               </button>
             }
+          />
+          <DeleteRecordButton
+            label="contractor"
+            name={contractor.name}
+            description="This removes the contractor and their property assignments from your directory. Maintenance cases are kept, but any assignment to this contractor is cleared. This cannot be undone."
+            onDelete={() => deleteAgencyContractor({ data: { id: contractor.id } })}
+            invalidateKeys={[["contractors"], ["maintenance_cases"]]}
+            redirectTo="/contractors"
           />
         </div>
       </header>
