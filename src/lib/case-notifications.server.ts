@@ -384,12 +384,6 @@ export async function notifyAgencyEvent(agencyId: string, event: AgencyEvent): P
       case "contractor_declined":
         body = `OVELO: ${s.contractorName ?? "The contractor"} cannot take job ${s.reference}. ${s.address}. Please assign another contractor.`;
         break;
-      case "contractor_unassigned":
-        body = `OVELO: the contractor assignment for ${s.reference} has been removed. ${s.address}.`;
-        break;
-      case "property_linked":
-        body = `OVELO: case ${s.reference} has been linked to ${s.address}. Tenant and landlord have been notified. Issue: ${s.issue}.`;
-        break;
     }
 
     await deliverAgencyNotification(agencyId, body);
