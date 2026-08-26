@@ -68,7 +68,7 @@ export const linkCaseToProperty = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase
       .from("maintenance_cases")
-      .select("id, agency_id")
+      .select("id, agency_id, reference_code, property_address")
       .eq("id", data.caseId)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -98,6 +98,28 @@ export const linkCaseToProperty = createServerFn({ method: "POST" })
       .eq("id", row.id)
       .eq("agency_id", row.agency_id);
     if (updateError) throw new Error(updateError.message);
+
+    // A manual link is the delayed equivalent of a successful automatic match:
+    // fire the exact same tenant/landlord notifications, once only. Entirely
+    // best-effort — an SMS failure can never undo the saved link.
+    if (propertyId) {
+      try {
+        const { notifyCaseCreated, claimCaseCreatedNotification, notifyAgencyEvent } =
+          await import("./case-notifications.server");
+        const claimed = await claimCaseCreatedNotification(row.agency_id, row.id);
+        if (claimed) {
+          await notifyCaseCreated({
+            agencyId: row.agency_id,
+            propertyId,
+            referenceCode: row.reference_code ?? row.id,
+            propertyAddress: row.property_address ?? null,
+          });
+          await notifyAgencyEvent(row.agency_id, { type: "property_linked", caseId: row.id });
+        }
+      } catch (err) {
+        console.error("[cases] manual link notification failed", err);
+      }
+    }
 
     return { caseId: row.id, propertyId, tenantId };
   });
