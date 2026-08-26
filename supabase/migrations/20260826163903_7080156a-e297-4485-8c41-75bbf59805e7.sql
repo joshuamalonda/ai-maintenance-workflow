@@ -1,0 +1,1 @@
+ALTER TABLE public.maintenance_cases ADD COLUMN appointment_at timestamptz;

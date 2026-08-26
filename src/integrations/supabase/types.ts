@@ -246,6 +246,7 @@ export type Database = {
           agency_id: string
           ai_confidence: number | null
           ai_summary: string | null
+          appointment_at: string | null
           assigned_at: string | null
           call_control_id: string | null
           call_duration_secs: number | null
@@ -289,6 +290,7 @@ export type Database = {
           agency_id: string
           ai_confidence?: number | null
           ai_summary?: string | null
+          appointment_at?: string | null
           assigned_at?: string | null
           call_control_id?: string | null
           call_duration_secs?: number | null
@@ -332,6 +334,7 @@ export type Database = {
           agency_id?: string
           ai_confidence?: number | null
           ai_summary?: string | null
+          appointment_at?: string | null
           assigned_at?: string | null
           call_control_id?: string | null
           call_duration_secs?: number | null
