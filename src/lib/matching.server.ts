@@ -153,8 +153,18 @@ export function scoreCandidate(
   const nameScore = nameSimilarity(target.tenantName, property.tenantName);
 
   // Weighted blend: postcode strong, address primary, name supporting only.
-  const score =
-    (postcodeMatch ? 0.4 : 0) + addressScore * 0.45 + nameScore * 0.15;
+  // Weights are renormalised over the signals that are actually available, so
+  // a missing postcode does not permanently cap the score.
+  const postcodeComparable = Boolean(target.postcode && propPostcode);
+  const nameComparable = Boolean(target.tenantName && property.tenantName);
+  const weight = 0.45 + (postcodeComparable ? 0.4 : 0) + (nameComparable ? 0.15 : 0);
+  let score =
+    ((postcodeMatch ? 0.4 : 0) + addressScore * 0.45 + nameScore * (nameComparable ? 0.15 : 0)) /
+    weight;
+
+  // A confirmed different postcode is a strong signal these are not the same
+  // property, whatever the address text looks like.
+  if (postcodeComparable && !postcodeMatch) score = Math.min(score, 0.5);
 
   return { score, postcodeMatch, addressScore, nameScore };
 }
