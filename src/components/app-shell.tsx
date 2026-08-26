@@ -1,7 +1,7 @@
 import { Link, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState, type ReactNode } from "react";
-import { Building2, ClipboardList, LayoutGrid, Menu, Wrench, X } from "lucide-react";
+import { Building2, ClipboardList, LayoutGrid, Menu, Settings, Wrench, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { OveloWordmark } from "@/components/ovelo-logo";
 
@@ -11,6 +11,11 @@ const nav = [
   { to: "/properties", label: "Properties", icon: Building2, exact: false },
   { to: "/contractors", label: "Contractors", icon: Wrench, exact: false },
 ] as const;
+
+const accountNav = [
+  { to: "/account", label: "Account", icon: Settings, exact: false },
+] as const;
+
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
