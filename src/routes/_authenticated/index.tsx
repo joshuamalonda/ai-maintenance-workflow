@@ -136,21 +136,6 @@ function Dashboard() {
   const { data: cases } = useSuspenseQuery(casesQuery);
 
   const active = cases.filter((c) => c.status !== "completed");
-  const responded = cases.filter((c) => c.status !== "needs_attention");
-  const avgHours = responded.length
-    ? responded.reduce(
-        (sum, c) =>
-          sum + (new Date(c.updated_at).getTime() - new Date(c.created_at).getTime()) / 3_600_000,
-        0,
-      ) / responded.length
-    : null;
-  const avgLabel =
-    avgHours == null
-      ? "—"
-      : avgHours < 1
-        ? `${Math.max(1, Math.round(avgHours * 60))}m`
-        : `${avgHours.toFixed(1)}h`;
-
   const latest = [...cases]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
     .slice(0, 10);
