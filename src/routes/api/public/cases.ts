@@ -205,14 +205,27 @@ export const Route = createFileRoute("/api/public/cases")({
         // intake result: failures leave property_id/tenant_id null.
         try {
           const { matchCaseToProperty } = await import("@/lib/matching.server");
-          await matchCaseToProperty({
+          const match = await matchCaseToProperty({
             caseId: (data as { id: string }).id,
             agencyId: endpoint.agencyId,
             propertyAddress: rest.property_address,
           });
+
+          // Confirmation SMS only when the case is linked to a real property,
+          // which is the only source of verified tenant/landlord numbers.
+          if (match.matched) {
+            const { notifyCaseCreated } = await import("@/lib/case-notifications.server");
+            await notifyCaseCreated({
+              agencyId: endpoint.agencyId,
+              propertyId: match.propertyId,
+              referenceCode: (data as { reference_code: string }).reference_code,
+              propertyAddress: rest.property_address,
+            });
+          }
         } catch {
           /* matching is advisory only */
         }
+
 
         return json({ ok: true, case: data }, 201);
       },
