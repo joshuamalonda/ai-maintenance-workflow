@@ -460,6 +460,12 @@ export async function notifyAgencyEvent(agencyId: string, event: AgencyEvent): P
       case "contractor_declined":
         body = `OVELO: ${s.contractorName ?? "The contractor"} cannot take job ${s.reference}. ${s.address}. Please assign another contractor.`;
         break;
+      case "landlord_handling":
+        body = `OVELO: the landlord is handling ${s.reference} themselves. ${s.address}. The case has been closed.`;
+        break;
+      case "case_completed":
+        body = `OVELO: case ${s.reference} has been marked complete. ${s.address}.`;
+        break;
     }
 
     await deliverAgencyNotification(agencyId, body);
