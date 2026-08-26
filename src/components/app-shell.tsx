@@ -17,11 +17,19 @@ const accountNav = [
 ] as const;
 
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+type NavItem = { to: string; label: string; icon: typeof LayoutGrid; exact: boolean };
+
+function NavLinks({
+  items = nav as readonly NavItem[],
+  onNavigate,
+}: {
+  items?: readonly NavItem[];
+  onNavigate?: () => void;
+}) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   return (
     <nav className="space-y-0.5">
-      {nav.map((item) => {
+      {items.map((item) => {
         const active = item.exact ? pathname === item.to : pathname.startsWith(item.to);
         return (
           <Link
@@ -53,9 +61,12 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         </p>
         <NavLinks onNavigate={onNavigate} />
       </div>
-      <p className="px-3 text-[11px] leading-relaxed text-muted-foreground">
-        Ovelo Technologies
-      </p>
+      <div className="border-t border-border pt-3">
+        <NavLinks items={accountNav as readonly NavItem[]} onNavigate={onNavigate} />
+        <p className="mt-3 px-3 text-[11px] leading-relaxed text-muted-foreground">
+          Ovelo Technologies
+        </p>
+      </div>
     </div>
   );
 }
