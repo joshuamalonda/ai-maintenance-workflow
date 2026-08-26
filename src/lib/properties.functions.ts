@@ -76,15 +76,17 @@ export const getProperty = createServerFn({ method: "GET" })
       .eq("property_id", data.id);
     if (linkError) throw new Error(linkError.message);
 
-    // Maintenance cases stay untouched by this step; they are matched by the
-    // address text captured at intake time.
-    const address = (property as unknown as Property).address;
+    // Only show cases that are actually linked to this property via the
+    // foreign key set by the automatic matcher / manual linking UI. We do
+    // NOT use address-text matching here, because that would surface cases
+    // whose free-text address merely contains the property address but have
+    // not been linked (e.g. cases created before the matcher was live).
     const { data: cases, error: caseError } = await supabase
       .from("maintenance_cases")
       .select(
         "id, reference_code, tenant_name, property_address, issue_category, urgency, status, created_at",
       )
-      .ilike("property_address", `%${address}%`)
+      .eq("property_id", data.id)
       .order("created_at", { ascending: false });
     if (caseError) throw new Error(caseError.message);
 
