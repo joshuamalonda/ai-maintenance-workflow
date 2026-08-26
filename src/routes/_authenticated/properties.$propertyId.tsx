@@ -9,8 +9,10 @@ import {
   getProperty,
   listContractors,
   unassignContractor,
+  deleteProperty,
 } from "@/lib/properties.functions";
 import { PropertyFormDialog } from "@/components/property-form-dialog";
+import { DeleteRecordButton } from "@/components/delete-record-button";
 import { CategoryTag, StatusBadge, UrgencyBadge } from "@/components/case-badges";
 
 const propertyQuery = (id: string) =>
@@ -102,20 +104,30 @@ function PropertyDetail() {
             {property.postcode ?? "No postcode"}
           </p>
         </div>
-        <PropertyFormDialog
-          property={{
-            id: property.id,
-            address: property.address,
-            postcode: property.postcode,
-            landlord_id: property.landlord_id,
-            tenant_id: property.tenant_id,
-          }}
-          trigger={
-            <button className="rounded-md border border-input px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-brand-tint">
-              Edit property
-            </button>
-          }
-        />
+        <div className="flex flex-wrap gap-2">
+          <PropertyFormDialog
+            property={{
+              id: property.id,
+              address: property.address,
+              postcode: property.postcode,
+              landlord_id: property.landlord_id,
+              tenant_id: property.tenant_id,
+            }}
+            trigger={
+              <button className="rounded-md border border-input px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-brand-tint">
+                Edit property
+              </button>
+            }
+          />
+          <DeleteRecordButton
+            label="property"
+            name={property.address}
+            description="This removes the property and its contractor assignments from your directory. Maintenance cases are kept, but will no longer be linked to this address. This cannot be undone."
+            onDelete={() => deleteProperty({ data: { id: property.id } })}
+            invalidateKeys={[["properties"], ["maintenance_cases"]]}
+            redirectTo="/properties"
+          />
+        </div>
       </header>
 
       <div className="grid gap-4 lg:grid-cols-2">

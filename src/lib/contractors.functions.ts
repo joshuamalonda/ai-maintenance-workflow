@@ -195,3 +195,40 @@ export const unassignContractorFromProperty = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { id: data.link_id };
   });
+
+/**
+ * Deletes a contractor owned by the caller's agency. Property assignments
+ * cascade automatically; maintenance cases are unlinked (never deleted) so
+ * case history survives a directory change.
+ */
+export const deleteAgencyContractor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const supabase = context.supabase as Client;
+    const { data: row, error: findError } = await supabase
+      .from("contractors")
+      .select("id, agency_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (findError) throw new Error(findError.message);
+    if (!row) throw new Error("Contractor not found");
+    const agencyId = (row as { agency_id: string }).agency_id;
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error: unlinkError } = await supabaseAdmin
+      .from("maintenance_cases")
+      .update({
+        contractor_id: null,
+        assigned_at: null,
+        contractor_response_status: null,
+        contractor_responded_at: null,
+      })
+      .eq("contractor_id", data.id)
+      .eq("agency_id", agencyId);
+    if (unlinkError) throw new Error(unlinkError.message);
+
+    const { error } = await supabase.from("contractors").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { id: data.id };
+  });
