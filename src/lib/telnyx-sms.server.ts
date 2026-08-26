@@ -10,13 +10,13 @@ const E164 = /^\+?[1-9]\d{5,14}$/;
 export type SendSmsResult = {
   messageId: string | null;
   status: string | null;
-  raw: unknown;
+  raw: string | null;
 };
 
 export type SendSmsError = {
   error: string;
   status?: number;
-  detail?: unknown;
+  detail?: string;
 };
 
 /** Validates that a phone number is in E.164 format. */
