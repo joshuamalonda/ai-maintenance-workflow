@@ -181,7 +181,7 @@ export const assignCaseContractor = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase
       .from("maintenance_cases")
-      .select("id, agency_id, property_id")
+      .select("id, agency_id, property_id, status")
       .eq("id", data.caseId)
       .maybeSingle();
     if (error) throw new Error(error.message);
