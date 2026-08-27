@@ -30,6 +30,8 @@ const propertyDataQuery = queryOptions({
 export const Route = createFileRoute("/_authenticated/account")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(accountQuery);
+    context.queryClient.ensureQueryData(propertyDataQuery);
+
   },
   head: () => ({
     meta: [
