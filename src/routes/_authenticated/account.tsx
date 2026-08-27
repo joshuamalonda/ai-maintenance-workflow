@@ -1,17 +1,31 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
 import {
   getAgencyAccount,
   setAgencyNotificationPhone,
   type AgencyAccount,
 } from "@/lib/account.functions";
+import {
+  exportPropertiesCsv,
+  getPropertyDataSummary,
+} from "@/lib/property-import.functions";
+import { PropertyImportDialog } from "@/components/property-import-dialog";
+import { downloadCsv, toCsv, PROPERTY_IMPORT_COLUMNS, PROPERTY_IMPORT_TEMPLATE } from "@/lib/csv";
 import { isValidNotificationPhone, toE164 } from "@/lib/phone";
 
 const accountQuery = queryOptions({
   queryKey: ["agency-account"],
   queryFn: () => getAgencyAccount(),
 });
+
+const propertyDataQuery = queryOptions({
+  queryKey: ["property-data-summary"],
+  queryFn: () => getPropertyDataSummary(),
+});
+
 
 export const Route = createFileRoute("/_authenticated/account")({
   loader: ({ context }) => {
