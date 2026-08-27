@@ -319,7 +319,7 @@ export async function applyImport(supabase: Client, csv: string): Promise<Import
       const matches = existing.propertiesByKey.get(row.key) ?? [];
       if (matches.length === 1) {
         const current = matches[0];
-        const patch: Record<string, string> = {};
+        const patch: { postcode?: string; tenant_id?: string; landlord_id?: string } = {};
         if (!current.postcode && row.postcode) patch.postcode = row.postcode;
         if (!current.tenant_id && tenantId) patch.tenant_id = tenantId;
         if (!current.landlord_id && landlordId) patch.landlord_id = landlordId;
