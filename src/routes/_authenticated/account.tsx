@@ -1,11 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { queryOptions, useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { Download } from "lucide-react";
+import { toast } from "sonner";
 import {
   getAgencyAccount,
   setAgencyNotificationPhone,
   type AgencyAccount,
 } from "@/lib/account.functions";
+import {
+  exportPropertiesCsv,
+  getPropertyDataSummary,
+} from "@/lib/property-import.functions";
+import { PropertyImportDialog } from "@/components/property-import-dialog";
+import { downloadCsv, toCsv, PROPERTY_IMPORT_COLUMNS, PROPERTY_IMPORT_TEMPLATE } from "@/lib/csv";
 import { isValidNotificationPhone, toE164 } from "@/lib/phone";
 
 const accountQuery = queryOptions({
@@ -13,9 +21,17 @@ const accountQuery = queryOptions({
   queryFn: () => getAgencyAccount(),
 });
 
+const propertyDataQuery = queryOptions({
+  queryKey: ["property-data-summary"],
+  queryFn: () => getPropertyDataSummary(),
+});
+
+
 export const Route = createFileRoute("/_authenticated/account")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(accountQuery);
+    context.queryClient.ensureQueryData(propertyDataQuery);
+
   },
   head: () => ({
     meta: [
@@ -178,6 +194,58 @@ function AccountPage() {
           <span className="font-medium text-ink">{current ?? "Not set"}</span>
         </p>
       </section>
+
+      <PropertyDataSection />
     </div>
   );
 }
+
+function PropertyDataSection() {
+  const { data: summary } = useSuspenseQuery(propertyDataQuery);
+  const [exporting, setExporting] = useState(false);
+
+  return (
+    <section className="mt-6 rounded-lg border border-border bg-surface p-5">
+      <h2 className="text-sm font-semibold text-ink">Property data</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Import your properties, tenants and landlords into OVELO. Start with a few pilot properties
+        and expand when you're ready.
+      </p>
+
+      <p className="mt-4 text-sm text-ink">
+        <span className="font-semibold">{summary.properties}</span> properties ·{" "}
+        {summary.tenants} tenants · {summary.landlords} landlords
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <PropertyImportDialog />
+        <button
+          type="button"
+          disabled={exporting || summary.properties === 0}
+          onClick={async () => {
+            setExporting(true);
+            try {
+              const rows = await exportPropertiesCsv();
+              downloadCsv("ovelo-properties.csv", toCsv([...PROPERTY_IMPORT_COLUMNS], rows));
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Export failed");
+            } finally {
+              setExporting(false);
+            }
+          }}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border px-3.5 py-2 text-sm font-medium text-ink transition-colors hover:bg-brand-tint disabled:opacity-50"
+        >
+          <Download className="size-4" /> {exporting ? "Preparing…" : "Export CSV"}
+        </button>
+        <button
+          type="button"
+          onClick={() => downloadCsv("ovelo-property-template.csv", PROPERTY_IMPORT_TEMPLATE)}
+          className="text-xs text-muted-foreground underline underline-offset-4 hover:text-ink"
+        >
+          Download CSV template
+        </button>
+      </div>
+    </section>
+  );
+}
+
