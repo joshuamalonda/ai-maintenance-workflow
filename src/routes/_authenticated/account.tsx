@@ -335,8 +335,7 @@ function NumberField(props: {
   );
 }
 
-  );
-}
+
 
 function PropertyDataSection() {
   const { data: summary } = useSuspenseQuery(propertyDataQuery);
