@@ -18,7 +18,16 @@ const inputSchema = z.object({
 export const sendTestSms = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => inputSchema.parse(input))
-  .handler(async ({ data }) => {
-    const result = await sendTelnyxSms(data.recipient, data.body);
-    return result;
+  .handler(async ({ data, context }) => {
+    // Sender is the caller's own agency number; never a hardcoded sender.
+    const { data: membership } = await context.supabase
+      .from("agency_members")
+      .select("agency_id")
+      .eq("user_id", context.userId)
+      .limit(1)
+      .maybeSingle();
+    const agencyId = (membership as { agency_id: string } | null)?.agency_id ?? null;
+    const { resolveAgencySender } = await import("./telnyx-sms.server");
+    const from = agencyId ? await resolveAgencySender(agencyId) : null;
+    return await sendTelnyxSms(data.recipient, data.body, { from });
   });
