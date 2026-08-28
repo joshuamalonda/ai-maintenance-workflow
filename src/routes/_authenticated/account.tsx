@@ -220,7 +220,7 @@ function CommunicationsSection() {
       <h2 className="text-sm font-semibold text-ink">Phone &amp; SMS</h2>
       <p className="mt-1 text-xs text-muted-foreground">
         Your agency uses <strong>two separate numbers</strong>. The voice number is a local
-        Telnyx number that receives tenant calls and cannot send texts. The SMS number is a
+        local number that receives tenant calls and cannot send texts. The SMS number is a
         separate UK mobile (+447…) used only to send Ovelo notifications. Do not enter the same
         number in both fields.
       </p>
