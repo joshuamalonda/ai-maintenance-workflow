@@ -7,7 +7,8 @@ import {
   getAgencyAccount,
   getAgencyCommunications,
   setAgencyNotificationPhone,
-  setAgencyPhoneNumber,
+  setAgencyVoiceNumber,
+  setAgencySmsNumber,
   type AgencyAccount,
   type AgencyCommunications,
 } from "@/lib/account.functions";
