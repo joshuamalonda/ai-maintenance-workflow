@@ -94,8 +94,12 @@ export async function resolveEndpointAgency(
     .from("channel_endpoints")
     .select("id, agency_id, channel, identifier")
     .eq("identifier_key", key)
+    // Inbound intake resolves voice and WhatsApp endpoints only; an agency's
+    // outbound SMS sender ('sms') is never an inbound destination.
+    .in("channel", ["phone", "whatsapp"])
     .eq("is_active", true)
     .maybeSingle();
+
 
   if (error) {
     console.error("[agency] endpoint lookup failed", error.message);
