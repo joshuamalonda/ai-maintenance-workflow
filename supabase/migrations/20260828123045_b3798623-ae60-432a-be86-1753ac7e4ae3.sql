@@ -1,0 +1,2 @@
+ALTER TABLE public.channel_endpoints DROP CONSTRAINT IF EXISTS channel_endpoints_channel_check;
+ALTER TABLE public.channel_endpoints ADD CONSTRAINT channel_endpoints_channel_check CHECK (channel = ANY (ARRAY['phone'::text, 'whatsapp'::text, 'sms'::text]));
