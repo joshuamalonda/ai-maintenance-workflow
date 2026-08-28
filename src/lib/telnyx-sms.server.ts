@@ -1,21 +1,19 @@
 // Server-only helper for sending outbound SMS through Telnyx.
 // Uses the existing TELNYX_API_KEY secret and the "Ovelo SMS" messaging
-// profile. The sender is the agency's own assigned Ovelo number, resolved
-// from channel_endpoints.
+// profile. The sender is ALWAYS the agency's own SMS number (an SMS-capable
+// mobile), resolved from channel_endpoints with channel = 'sms'.
+//
+// The agency's voice number (channel = 'phone') is a local, voice-only Telnyx
+// number and must never be used as an SMS sender.
 // Never imported by client code.
 
 const TELNYX_MESSAGES_API = "https://api.telnyx.com/v2/messages";
 
-// Fallback sender used only when an agency has no assigned Ovelo number.
-// Alphanumeric senders are one-way and can be filtered by UK carriers, so
-// every agency should have a dedicated long number registered instead.
-const FALLBACK_SENDER_ID = "OVELO";
-
 /**
  * Resolves the outbound SMS sender for an agency: the E.164 identifier of its
- * active `phone` channel endpoint. `channel_endpoints` is the single source of
+ * active `sms` channel endpoint. `channel_endpoints` is the single source of
  * truth for an agency's communication identity. Returns null when the agency
- * has no assigned number.
+ * has no SMS number configured — there is no global fallback sender.
  */
 export async function resolveAgencySender(agencyId: string): Promise<string | null> {
   try {
@@ -24,7 +22,7 @@ export async function resolveAgencySender(agencyId: string): Promise<string | nu
       .from("channel_endpoints")
       .select("identifier")
       .eq("agency_id", agencyId)
-      .eq("channel", "phone")
+      .eq("channel", "sms")
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -37,6 +35,7 @@ export async function resolveAgencySender(agencyId: string): Promise<string | nu
     return null;
   }
 }
+
 
 // E.164: optional "+" then 6-15 digits.
 const E164 = /^\+?[1-9]\d{5,14}$/;
