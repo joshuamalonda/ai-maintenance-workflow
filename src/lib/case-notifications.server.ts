@@ -1,7 +1,7 @@
 // Server-only: best-effort transactional SMS on successful case creation.
 // Never throws into the intake path — every failure is logged and swallowed.
 
-import { sendTelnyxSms, isValidE164 } from "./telnyx-sms.server";
+import { sendTelnyxSms, isValidE164, resolveAgencySender } from "./telnyx-sms.server";
 
 export type NotifyCaseCreatedInput = {
   agencyId: string;
@@ -59,10 +59,20 @@ export function toE164(raw: string | null | undefined): string | null {
   return value;
 }
 
-async function trySend(label: string, phone: string | null, body: string) {
+/**
+ * Sends one best-effort SMS. `from` is the agency's assigned Ovelo number
+ * (resolved by the caller via `resolveAgencySender`), so every outbound
+ * message is attributable to the agency that generated it.
+ */
+async function trySend(
+  label: string,
+  phone: string | null,
+  body: string,
+  from: string | null,
+) {
   const to = toE164(phone);
   if (!to || !isValidE164(to)) return;
-  const result = await sendTelnyxSms(to, body);
+  const result = await sendTelnyxSms(to, body, { from });
   if ("error" in result) {
     console.error(`[case-notifications] ${label} SMS failed`, result.error, result.detail);
   }
@@ -120,15 +130,19 @@ export async function notifyCaseCreated(input: NotifyCaseCreatedInput): Promise<
       /* keep default summary */
     }
 
+    const from = await resolveAgencySender(input.agencyId);
+
     await trySend(
       "tenant",
       row.tenant?.phone ?? null,
       `Your maintenance request has been logged. Reference ${ref}. We'll be in touch.`,
+      from,
     );
     await trySend(
       "landlord",
       row.landlord?.phone ?? null,
       `Maintenance issue reported at ${address}. Ref: ${ref}. Issue: ${issueSummary}. A contractor can be assigned to resolve this. If you would like to handle the issue yourself, please contact the agency.`,
+      from,
     );
   } catch (err) {
     console.error("[case-notifications] unexpected failure", err);
@@ -192,6 +206,7 @@ export async function notifyContractorAssigned(
       "contractor",
       phone,
       `New OVELO maintenance job ${reference}. ${address}. Issue: ${issue}. Please contact the agency to confirm you can handle this job.`,
+      await resolveAgencySender(input.agencyId),
     );
   } catch (err) {
     console.error("[case-notifications] contractor SMS unexpected failure", err);
@@ -274,6 +289,7 @@ export async function notifyContractorAppointmentConfirmed(
       "contractor",
       phone,
       `Job ${reference} confirmed. ${address}. Issue: ${issue}. Appointment: ${datePart} at ${timePart}. Please attend at the confirmed time.`,
+      await resolveAgencySender(input.agencyId),
     );
   } catch (err) {
     console.error("[case-notifications] contractor appointment SMS unexpected failure", err);
@@ -337,15 +353,19 @@ export async function notifyAppointmentParties(
       [row.contractor?.name, row.contractor?.company].filter(Boolean).join(", ") ||
       "a contractor";
 
+    const from = await resolveAgencySender(input.agencyId);
+
     await trySend(
       "tenant",
       p.tenant?.phone ?? null,
       `Your maintenance appointment is confirmed. ${contractor} will attend ${address} on ${when}. Ref: ${reference}. Please make sure someone can provide access.`,
+      from,
     );
     await trySend(
       "landlord",
       p.landlord?.phone ?? null,
       `Appointment confirmed for ${address}. ${contractor} will attend on ${when}. Ref: ${reference}.`,
+      from,
     );
   } catch (err) {
     console.error("[case-notifications] appointment parties SMS failed", err);
@@ -423,7 +443,7 @@ async function deliverAgencyNotification(agencyId: string, body: string) {
   if (error || !agency) return;
   const phone = (agency as { notification_phone: string | null }).notification_phone;
   if (!phone) return;
-  await trySend("agency", phone, body);
+  await trySend("agency", phone, body, await resolveAgencySender(agencyId));
 }
 
 /** Sends the agency the SMS for a workflow milestone. Never throws. */

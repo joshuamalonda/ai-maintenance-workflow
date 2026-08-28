@@ -1,6 +1,7 @@
 // Server-only helper for sending outbound SMS through Telnyx.
-// Uses the existing TELNYX_API_KEY secret and the approved alphanumeric
-// sender ID "OVELO" attached to the "Ovelo SMS" messaging profile.
+// Uses the existing TELNYX_API_KEY secret and the "Ovelo SMS" messaging
+// profile. The sender is the agency's own assigned Ovelo number, resolved
+// from channel_endpoints.
 // Never imported by client code.
 
 const TELNYX_MESSAGES_API = "https://api.telnyx.com/v2/messages";
