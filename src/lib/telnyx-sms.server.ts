@@ -58,11 +58,12 @@ export function isValidE164(phone: string): boolean {
 }
 
 /**
- * Sends a single outbound SMS via Telnyx from the supplied sender (normally the
- * agency's own Ovelo long number).
+ * Sends a single outbound SMS via Telnyx from the agency's own SMS number.
+ * There is no global fallback sender: without a configured agency SMS number
+ * the send fails with a clear error.
  *
  * @param recipient E.164 phone number (e.g. "+447700900000")
- * @param options.from Agency-specific sender (E.164). Falls back to "OVELO".
+ * @param options.from Agency SMS sender in E.164 (required).
  * @param body      Message body (UTF-8, <= 1600 chars per Telnyx limit)
  */
 export async function sendTelnyxSms(
@@ -70,12 +71,16 @@ export async function sendTelnyxSms(
   body: string,
   options?: { from?: string | null },
 ): Promise<SendSmsResult | SendSmsError> {
-  const from = options?.from && options.from.trim() ? options.from.trim() : FALLBACK_SENDER_ID;
+  const from = options?.from?.trim() ?? "";
+  if (!from || !isValidE164(from)) {
+    return { error: "Agency SMS number is not configured" };
+  }
   const apiKey = process.env["TELNYX_API_KEY"];
 
   if (!apiKey) {
     return { error: "TELNYX_API_KEY is not configured on the server." };
   }
+
 
   const to = recipient.trim();
   if (!isValidE164(to)) {
