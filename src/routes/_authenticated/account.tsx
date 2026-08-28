@@ -339,10 +339,7 @@ function PropertyDataSection() {
   return (
     <section className="mt-6 rounded-lg border border-border bg-surface p-5">
       <h2 className="text-sm font-semibold text-ink">Property data</h2>
-      <p className="mt-1 text-xs text-muted-foreground">
-        Import your properties, tenants and landlords into OVELO. Start with a few pilot properties
-        and expand when you're ready.
-      </p>
+      <p className="mt-1 text-xs text-muted-foreground">Import your properties, tenants and landlords into OVELO.&nbsp;</p>
 
       <p className="mt-4 text-sm text-ink">
         <span className="font-semibold">{summary.properties}</span> properties ·{" "}
