@@ -5,8 +5,11 @@ import { Download } from "lucide-react";
 import { toast } from "sonner";
 import {
   getAgencyAccount,
+  getAgencyCommunications,
   setAgencyNotificationPhone,
+  setAgencyPhoneNumber,
   type AgencyAccount,
+  type AgencyCommunications,
 } from "@/lib/account.functions";
 import {
   exportPropertiesCsv,
@@ -21,6 +24,11 @@ const accountQuery = queryOptions({
   queryFn: () => getAgencyAccount(),
 });
 
+const communicationsQuery = queryOptions({
+  queryKey: ["agency-communications"],
+  queryFn: () => getAgencyCommunications(),
+});
+
 const propertyDataQuery = queryOptions({
   queryKey: ["property-data-summary"],
   queryFn: () => getPropertyDataSummary(),
@@ -31,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/account")({
   loader: ({ context }) => {
     context.queryClient.ensureQueryData(accountQuery);
     context.queryClient.ensureQueryData(propertyDataQuery);
+    context.queryClient.ensureQueryData(communicationsQuery);
 
   },
   head: () => ({
@@ -195,8 +204,100 @@ function AccountPage() {
         </p>
       </section>
 
+      <CommunicationsSection />
+
       <PropertyDataSection />
     </div>
+  );
+}
+
+function CommunicationsSection() {
+  const { data: comms } = useSuspenseQuery(communicationsQuery);
+  const queryClient = useQueryClient();
+  const [value, setValue] = useState(comms.phoneNumber ?? "");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setValue(comms.phoneNumber ?? "");
+  }, [comms.phoneNumber]);
+
+  const mutation = useMutation({
+    mutationFn: (phone: string) => setAgencyPhoneNumber({ data: { phone } }),
+    onSuccess: (updated: AgencyCommunications) => {
+      queryClient.setQueryData(communicationsQuery.queryKey, updated);
+      setError(null);
+      toast.success("Ovelo number saved for this agency.");
+    },
+    onError: (err: Error) => setError(err.message),
+  });
+
+  const connected = Boolean(comms.phoneNumber);
+
+  return (
+    <section className="mt-6 rounded-lg border border-border bg-surface p-5">
+      <h2 className="text-sm font-semibold text-ink">Phone &amp; SMS</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        This number is used for tenant calls and Ovelo SMS notifications for this agency.
+      </p>
+
+      <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div>
+          <dt className={labelClass}>Assigned Ovelo number</dt>
+          <dd className="text-sm font-medium text-ink">{comms.phoneNumber ?? "Not configured"}</dd>
+        </div>
+        <div>
+          <dt className={labelClass}>Inbound calls</dt>
+          <dd className="text-sm font-medium text-ink">
+            {connected ? "Connected" : "Not configured"}
+          </dd>
+        </div>
+        <div>
+          <dt className={labelClass}>Outbound SMS</dt>
+          <dd className="text-sm font-medium text-ink">{connected ? "Ready" : "Not configured"}</dd>
+        </div>
+      </dl>
+
+      <form
+        className="mt-5 max-w-sm"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const trimmed = value.trim();
+          const e164 = toE164(trimmed);
+          if (!e164 || !isValidNotificationPhone(trimmed)) {
+            setError("Enter a valid number in international format, e.g. +441137336198.");
+            return;
+          }
+          setError(null);
+          mutation.mutate(trimmed);
+        }}
+      >
+        <label className={labelClass} htmlFor="agency-ovelo-number">
+          Agency Ovelo number
+        </label>
+        <input
+          id="agency-ovelo-number"
+          type="tel"
+          inputMode="tel"
+          placeholder="+441137336198"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className={inputClass}
+        />
+        <p className="mt-1.5 text-[11px] text-muted-foreground">
+          Provision and configure the number in Telnyx first (voice + SMS), then register it here.
+        </p>
+        <div className="mt-4">
+          <button
+            type="submit"
+            disabled={mutation.isPending}
+            className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {mutation.isPending ? "Saving…" : connected ? "Save changes" : "Connect number"}
+          </button>
+        </div>
+        {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+      </form>
+    </section>
   );
 }
 
