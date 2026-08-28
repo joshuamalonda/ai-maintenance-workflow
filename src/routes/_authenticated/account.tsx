@@ -213,91 +213,128 @@ function AccountPage() {
 
 function CommunicationsSection() {
   const { data: comms } = useSuspenseQuery(communicationsQuery);
-  const queryClient = useQueryClient();
-  const [value, setValue] = useState(comms.phoneNumber ?? "");
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setValue(comms.phoneNumber ?? "");
-  }, [comms.phoneNumber]);
-
-  const mutation = useMutation({
-    mutationFn: (phone: string) => setAgencyPhoneNumber({ data: { phone } }),
-    onSuccess: (updated: AgencyCommunications) => {
-      queryClient.setQueryData(communicationsQuery.queryKey, updated);
-      setError(null);
-      toast.success("Ovelo number saved for this agency.");
-    },
-    onError: (err: Error) => setError(err.message),
-  });
-
-  const connected = Boolean(comms.phoneNumber);
 
   return (
     <section className="mt-6 rounded-lg border border-border bg-surface p-5">
       <h2 className="text-sm font-semibold text-ink">Phone &amp; SMS</h2>
       <p className="mt-1 text-xs text-muted-foreground">
-        This number is used for tenant calls and Ovelo SMS notifications for this agency.
+        Your agency uses <strong>two separate numbers</strong>. The voice number is a local
+        Telnyx number that receives tenant calls and cannot send texts. The SMS number is a
+        separate UK mobile (+447…) used only to send Ovelo notifications. Do not enter the same
+        number in both fields.
       </p>
 
-      <dl className="mt-4 grid gap-3 sm:grid-cols-3">
-        <div>
-          <dt className={labelClass}>Assigned Ovelo number</dt>
-          <dd className="text-sm font-medium text-ink">{comms.phoneNumber ?? "Not configured"}</dd>
-        </div>
-        <div>
-          <dt className={labelClass}>Inbound calls</dt>
-          <dd className="text-sm font-medium text-ink">
-            {connected ? "Connected" : "Not configured"}
-          </dd>
-        </div>
-        <div>
-          <dt className={labelClass}>Outbound SMS</dt>
-          <dd className="text-sm font-medium text-ink">{connected ? "Ready" : "Not configured"}</dd>
-        </div>
-      </dl>
+      <NumberField
+        id="agency-voice-number"
+        title="Agency voice number"
+        description="Local Telnyx number (e.g. +441137336198) used only for inbound tenant calls and voice routing. Never used to send SMS."
+        statusLabel="Inbound calls"
+        statusValue={comms.voiceNumber ? "Connected" : "Needs configuring"}
+        placeholder="+441137336198"
+        current={comms.voiceNumber}
+        save={(phone) => setAgencyVoiceNumber({ data: { phone } })}
+      />
+
+      <NumberField
+        id="agency-sms-number"
+        title="Agency SMS number"
+        description="SMS-capable UK mobile in international format (e.g. +447700900123) used only as the sender for Ovelo SMS notifications. Not your call-routing number."
+        statusLabel="Outbound SMS"
+        statusValue={comms.smsNumber ? "Ready" : "Not configured"}
+        placeholder="+447700900123"
+        current={comms.smsNumber}
+        save={(phone) => setAgencySmsNumber({ data: { phone } })}
+      />
+
+      {!comms.smsNumber && (
+        <p className="mt-4 text-xs text-destructive">
+          No SMS number configured — Ovelo cannot send tenant, landlord, contractor or agency
+          notifications until you add an SMS-capable mobile number.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function NumberField(props: {
+  id: string;
+  title: string;
+  description: string;
+  statusLabel: string;
+  statusValue: string;
+  placeholder: string;
+  current: string | null;
+  save: (phone: string) => Promise<AgencyCommunications>;
+}) {
+  const queryClient = useQueryClient();
+  const [value, setValue] = useState(props.current ?? "");
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setValue(props.current ?? "");
+  }, [props.current]);
+
+  const mutation = useMutation({
+    mutationFn: (phone: string) => props.save(phone),
+    onSuccess: (updated: AgencyCommunications) => {
+      queryClient.setQueryData(communicationsQuery.queryKey, updated);
+      setError(null);
+      toast.success(`${props.title} saved.`);
+    },
+    onError: (err: Error) => setError(err.message),
+  });
+
+  return (
+    <div className="mt-5 border-t border-border pt-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="text-xs font-semibold text-ink">{props.title}</h3>
+        <span className="text-[11px] text-muted-foreground">
+          {props.statusLabel}: <span className="font-medium text-ink">{props.statusValue}</span>
+        </span>
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">{props.description}</p>
 
       <form
-        className="mt-5 max-w-sm"
+        className="mt-3 max-w-sm"
         onSubmit={(e) => {
           e.preventDefault();
           const trimmed = value.trim();
           const e164 = toE164(trimmed);
           if (!e164 || !isValidNotificationPhone(trimmed)) {
-            setError("Enter a valid number in international format, e.g. +441137336198.");
+            setError("Enter a valid number in international format, e.g. +447700900123.");
             return;
           }
           setError(null);
           mutation.mutate(trimmed);
         }}
       >
-        <label className={labelClass} htmlFor="agency-ovelo-number">
-          Agency Ovelo number
+        <label className={labelClass} htmlFor={props.id}>
+          Number
         </label>
         <input
-          id="agency-ovelo-number"
+          id={props.id}
           type="tel"
           inputMode="tel"
-          placeholder="+441137336198"
+          placeholder={props.placeholder}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           className={inputClass}
         />
-        <p className="mt-1.5 text-[11px] text-muted-foreground">
-          Provision and configure the number in Telnyx first (voice + SMS), then register it here.
-        </p>
-        <div className="mt-4">
+        <div className="mt-3">
           <button
             type="submit"
             disabled={mutation.isPending}
             className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {mutation.isPending ? "Saving…" : connected ? "Save changes" : "Connect number"}
+            {mutation.isPending ? "Saving…" : props.current ? "Save changes" : "Connect number"}
           </button>
         </div>
         {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
       </form>
-    </section>
+    </div>
+  );
+}
+
   );
 }
 
