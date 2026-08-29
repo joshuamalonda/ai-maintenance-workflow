@@ -95,7 +95,7 @@ async function currentAgencyId(
   return (data as { agency_id: string }).agency_id;
 }
 
-type EndpointChannel = "phone" | "sms";
+type EndpointChannel = "phone" | "sms" | "whatsapp";
 
 async function readCommunications(agencyId: string): Promise<AgencyCommunications> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -103,7 +103,7 @@ async function readCommunications(agencyId: string): Promise<AgencyCommunication
     .from("channel_endpoints")
     .select("id, identifier, channel")
     .eq("agency_id", agencyId)
-    .in("channel", ["phone", "sms"])
+    .in("channel", ["phone", "sms", "whatsapp"])
     .eq("is_active", true)
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
@@ -111,13 +111,17 @@ async function readCommunications(agencyId: string): Promise<AgencyCommunication
   const rows = (data ?? []) as Array<{ id: string; identifier: string; channel: string }>;
   const voice = rows.find((r) => r.channel === "phone") ?? null;
   const sms = rows.find((r) => r.channel === "sms") ?? null;
+  const whatsapp = rows.find((r) => r.channel === "whatsapp") ?? null;
   return {
     agencyId,
     voiceNumber: voice?.identifier ?? null,
     voiceEndpointId: voice?.id ?? null,
     smsNumber: sms?.identifier ?? null,
     smsEndpointId: sms?.id ?? null,
+    whatsappSender: whatsapp?.identifier ?? null,
+    whatsappEndpointId: whatsapp?.id ?? null,
   };
+
 }
 
 /** The agency's voice + SMS numbers, scoped by membership. */
