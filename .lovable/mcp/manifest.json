@@ -1,0 +1,173 @@
+{
+  "version": 1,
+  "sdk_version": "0.28.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://jhckbxanfaptjthdoemv.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "ovelo",
+      "version": "0.1.0",
+      "title": "Ovelo"
+    },
+    "tools": [
+      {
+        "name": "list_cases",
+        "title": "List maintenance cases",
+        "description": "List maintenance cases for the signed-in user's agency, newest first. Optionally filter by workflow status or urgency.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "needs_attention",
+                "in_progress",
+                "completed"
+              ],
+              "description": "Workflow status filter."
+            },
+            "urgency": {
+              "type": "string",
+              "description": "Urgency value filter, e.g. high."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Max rows to return (default 25, max 100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_case",
+        "title": "Get case details",
+        "description": "Fetch one maintenance case by its id or reference code (e.g. MC-000123), including AI summary and workflow fields.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Case UUID."
+            },
+            "reference_code": {
+              "type": "string",
+              "description": "Case reference code, e.g. MC-000123."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_case_status",
+        "title": "Update case status",
+        "description": "Set the workflow status of a maintenance case owned by the signed-in user's agency.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "Case UUID."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "needs_attention",
+                "in_progress",
+                "completed"
+              ],
+              "description": "New workflow status."
+            }
+          },
+          "required": [
+            "id",
+            "status"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_properties",
+        "title": "List properties",
+        "description": "List properties belonging to the signed-in user's agency, optionally filtered by an address or postcode search term.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "search": {
+              "type": "string",
+              "description": "Match against address or postcode."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Max rows to return (default 25, max 100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_contractors",
+        "title": "List contractors",
+        "description": "List contractors on file for the signed-in user's agency.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "active_only": {
+              "type": "boolean",
+              "description": "Only return active contractors."
+            },
+            "trade": {
+              "type": "string",
+              "description": "Filter by trade, e.g. Plumbing."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Max rows to return (default 25, max 100)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
