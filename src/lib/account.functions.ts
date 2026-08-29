@@ -143,11 +143,25 @@ async function registerEndpoint(
   channel: EndpointChannel,
   rawPhone: string,
 ): Promise<AgencyCommunications> {
-  const phone = toE164(rawPhone);
-  if (!phone || !isValidE164(phone)) {
-    throw new Error("Enter a valid number in international format, e.g. +441137336198.");
+  let normalised: string;
+  if (channel === "whatsapp") {
+    // A WhatsApp sender is either a Meta business phone-number ID (digits
+    // only) or the business number in E.164 — both are accepted verbatim.
+    const raw = rawPhone.trim();
+    const digits = raw.replace(/[^0-9]/g, "");
+    if (digits.length < 6 || digits.length > 25) {
+      throw new Error(
+        "Enter the WhatsApp business phone-number ID (digits) or the business number in international format.",
+      );
+    }
+    normalised = raw.startsWith("+") ? `+${digits}` : digits;
+  } else {
+    const phone = toE164(rawPhone);
+    if (!phone || !isValidE164(phone)) {
+      throw new Error("Enter a valid number in international format, e.g. +441137336198.");
+    }
+    normalised = phone.startsWith("+") ? phone : `+${phone}`;
   }
-  const normalised = phone.startsWith("+") ? phone : `+${phone}`;
 
   const { identifierKey } = await import("@/lib/agency.server");
   const key = identifierKey(normalised);
@@ -157,7 +171,8 @@ async function registerEndpoint(
   // A voice number is voice-only and an SMS number is SMS-only: the same
   // number must never be registered for both roles.
   const current = await readCommunications(agencyId);
-  const other = channel === "phone" ? current.smsNumber : current.voiceNumber;
+  const other =
+    channel === "phone" ? current.smsNumber : channel === "sms" ? current.voiceNumber : null;
   if (other && identifierKey(other) === key) {
     throw new Error(
       channel === "phone"
@@ -165,6 +180,7 @@ async function registerEndpoint(
         : "This number is already set as the agency voice number. Local voice numbers cannot send SMS — use a separate SMS-capable mobile (+447...).",
     );
   }
+
 
   // Ownership check across all agencies — deliberately admin-scoped, since a
   // member cannot (and must not) read another agency's endpoints.
