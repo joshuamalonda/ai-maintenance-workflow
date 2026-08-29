@@ -9,6 +9,8 @@ import {
   setAgencyNotificationPhone,
   setAgencyVoiceNumber,
   setAgencySmsNumber,
+  setAgencyWhatsappSender,
+
   type AgencyAccount,
   type AgencyCommunications,
 } from "@/lib/account.functions";
@@ -241,6 +243,18 @@ function CommunicationsSection() {
         save={(phone) => setAgencySmsNumber({ data: { phone } })}
       />
 
+      <NumberField
+        id="agency-whatsapp-sender"
+        title="Agency WhatsApp sender"
+        description="Your WhatsApp business phone-number ID (digits) or business number. Inbound WhatsApp messages to this sender are routed to your agency only."
+        statusLabel="Inbound WhatsApp"
+        statusValue={comms.whatsappSender ? "Connected" : "Needs configuring"}
+        placeholder="1251679104695078"
+        current={comms.whatsappSender}
+        allowNonPhone
+        save={(sender) => setAgencyWhatsappSender({ data: { sender } })}
+      />
+
       {!comms.smsNumber && (
         <p className="mt-4 text-xs text-destructive">
           No SMS number configured — Ovelo cannot send tenant, landlord, contractor or agency
@@ -259,7 +273,10 @@ function NumberField(props: {
   statusValue: string;
   placeholder: string;
   current: string | null;
+  /** WhatsApp senders may be a digits-only business phone-number ID. */
+  allowNonPhone?: boolean;
   save: (phone: string) => Promise<AgencyCommunications>;
+
 }) {
   const queryClient = useQueryClient();
   const [value, setValue] = useState(props.current ?? "");
@@ -294,18 +311,27 @@ function NumberField(props: {
         onSubmit={(e) => {
           e.preventDefault();
           const trimmed = value.trim();
-          const e164 = toE164(trimmed);
-          if (!e164 || !isValidNotificationPhone(trimmed)) {
-            setError("Enter a valid number in international format, e.g. +447700900123.");
-            return;
+          if (props.allowNonPhone) {
+            const digits = trimmed.replace(/[^0-9]/g, "");
+            if (digits.length < 6 || digits.length > 25) {
+              setError("Enter the WhatsApp business phone-number ID or business number.");
+              return;
+            }
+          } else {
+            const e164 = toE164(trimmed);
+            if (!e164 || !isValidNotificationPhone(trimmed)) {
+              setError("Enter a valid number in international format, e.g. +447700900123.");
+              return;
+            }
           }
           setError(null);
           mutation.mutate(trimmed);
         }}
       >
         <label className={labelClass} htmlFor={props.id}>
-          Number
+          {props.allowNonPhone ? "Sender ID or number" : "Number"}
         </label>
+
         <input
           id={props.id}
           type="tel"

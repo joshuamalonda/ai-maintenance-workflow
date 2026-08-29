@@ -73,7 +73,11 @@ export type AgencyCommunications = {
   /** SMS-capable mobile in E.164 (outbound SMS sender), or null. */
   smsNumber: string | null;
   smsEndpointId: string | null;
+  /** WhatsApp business sender: phone-number ID or E.164 sender, or null. */
+  whatsappSender: string | null;
+  whatsappEndpointId: string | null;
 };
+
 
 /** Resolves the caller's agency through their membership. */
 async function currentAgencyId(
@@ -91,7 +95,7 @@ async function currentAgencyId(
   return (data as { agency_id: string }).agency_id;
 }
 
-type EndpointChannel = "phone" | "sms";
+type EndpointChannel = "phone" | "sms" | "whatsapp";
 
 async function readCommunications(agencyId: string): Promise<AgencyCommunications> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -99,7 +103,7 @@ async function readCommunications(agencyId: string): Promise<AgencyCommunication
     .from("channel_endpoints")
     .select("id, identifier, channel")
     .eq("agency_id", agencyId)
-    .in("channel", ["phone", "sms"])
+    .in("channel", ["phone", "sms", "whatsapp"])
     .eq("is_active", true)
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
@@ -107,13 +111,17 @@ async function readCommunications(agencyId: string): Promise<AgencyCommunication
   const rows = (data ?? []) as Array<{ id: string; identifier: string; channel: string }>;
   const voice = rows.find((r) => r.channel === "phone") ?? null;
   const sms = rows.find((r) => r.channel === "sms") ?? null;
+  const whatsapp = rows.find((r) => r.channel === "whatsapp") ?? null;
   return {
     agencyId,
     voiceNumber: voice?.identifier ?? null,
     voiceEndpointId: voice?.id ?? null,
     smsNumber: sms?.identifier ?? null,
     smsEndpointId: sms?.id ?? null,
+    whatsappSender: whatsapp?.identifier ?? null,
+    whatsappEndpointId: whatsapp?.id ?? null,
   };
+
 }
 
 /** The agency's voice + SMS numbers, scoped by membership. */
@@ -135,11 +143,25 @@ async function registerEndpoint(
   channel: EndpointChannel,
   rawPhone: string,
 ): Promise<AgencyCommunications> {
-  const phone = toE164(rawPhone);
-  if (!phone || !isValidE164(phone)) {
-    throw new Error("Enter a valid number in international format, e.g. +441137336198.");
+  let normalised: string;
+  if (channel === "whatsapp") {
+    // A WhatsApp sender is either a Meta business phone-number ID (digits
+    // only) or the business number in E.164 — both are accepted verbatim.
+    const raw = rawPhone.trim();
+    const digits = raw.replace(/[^0-9]/g, "");
+    if (digits.length < 6 || digits.length > 25) {
+      throw new Error(
+        "Enter the WhatsApp business phone-number ID (digits) or the business number in international format.",
+      );
+    }
+    normalised = raw.startsWith("+") ? `+${digits}` : digits;
+  } else {
+    const phone = toE164(rawPhone);
+    if (!phone || !isValidE164(phone)) {
+      throw new Error("Enter a valid number in international format, e.g. +441137336198.");
+    }
+    normalised = phone.startsWith("+") ? phone : `+${phone}`;
   }
-  const normalised = phone.startsWith("+") ? phone : `+${phone}`;
 
   const { identifierKey } = await import("@/lib/agency.server");
   const key = identifierKey(normalised);
@@ -149,7 +171,8 @@ async function registerEndpoint(
   // A voice number is voice-only and an SMS number is SMS-only: the same
   // number must never be registered for both roles.
   const current = await readCommunications(agencyId);
-  const other = channel === "phone" ? current.smsNumber : current.voiceNumber;
+  const other =
+    channel === "phone" ? current.smsNumber : channel === "sms" ? current.voiceNumber : null;
   if (other && identifierKey(other) === key) {
     throw new Error(
       channel === "phone"
@@ -157,6 +180,7 @@ async function registerEndpoint(
         : "This number is already set as the agency voice number. Local voice numbers cannot send SMS — use a separate SMS-capable mobile (+447...).",
     );
   }
+
 
   // Ownership check across all agencies — deliberately admin-scoped, since a
   // member cannot (and must not) read another agency's endpoints.
@@ -185,7 +209,13 @@ async function registerEndpoint(
   if (deactivateError) throw new Error(deactivateError.message);
 
   const mine = (existing ?? []).find((row) => row.agency_id === agencyId);
-  const label = channel === "phone" ? "Agency voice number" : "Agency SMS number";
+  const label =
+    channel === "phone"
+      ? "Agency voice number"
+      : channel === "sms"
+        ? "Agency SMS number"
+        : "Agency WhatsApp sender";
+
 
   if (mine) {
     const { error } = await supabaseAdmin
@@ -225,4 +255,18 @@ export const setAgencySmsNumber = createServerFn({ method: "POST" })
     const agencyId = await currentAgencyId(context.supabase as never, context.userId);
     return await registerEndpoint(agencyId, "sms", data.phone);
   });
+
+/**
+ * Registers the agency's WhatsApp business sender (Meta phone-number ID or the
+ * business number). Inbound WhatsApp intake resolves this endpoint to the
+ * owning agency, so onboarding never needs a hard-coded global sender.
+ */
+export const setAgencyWhatsappSender = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ sender: z.string().min(1).max(50) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const agencyId = await currentAgencyId(context.supabase as never, context.userId);
+    return await registerEndpoint(agencyId, "whatsapp", data.sender);
+  });
+
 
