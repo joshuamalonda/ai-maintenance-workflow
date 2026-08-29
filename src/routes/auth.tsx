@@ -21,11 +21,24 @@ export const Route = createFileRoute("/auth")({
       },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { next?: string } =>
+    typeof search.next === "string" ? { next: search.next } : {},
   component: AuthPage,
 });
 
+/** Only same-origin relative paths are accepted as a post-sign-in return target. */
+function safeNext(next?: string) {
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+}
+
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
+  const returnTo = safeNext(next);
+  const goHome = () => {
+    if (returnTo) window.location.replace(returnTo);
+    else navigate({ to: "/", replace: true });
+  };
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,9 +47,10 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/", replace: true });
+      if (data.session) goHome();
     });
-  }, [navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, returnTo]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,23 +62,27 @@ function AuthPage() {
         : supabase.auth.signUp({
             email,
             password,
-            options: { emailRedirectTo: window.location.origin },
+            options: {
+              emailRedirectTo: returnTo
+                ? `${window.location.origin}${returnTo}`
+                : window.location.origin,
+            },
           });
     const { data, error } = await fn;
     setBusy(false);
     if (error) return setMessage(error.message);
-    if (data.session) navigate({ to: "/", replace: true });
+    if (data.session) goHome();
     else setMessage("Check your inbox to confirm your email address.");
   }
 
   async function onGoogle() {
     setMessage(null);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: returnTo ? `${window.location.origin}${returnTo}` : window.location.origin,
     });
     if (result.error) return setMessage("Google sign-in failed. Please try again.");
     if (result.redirected) return;
-    navigate({ to: "/", replace: true });
+    goHome();
   }
 
   return (
