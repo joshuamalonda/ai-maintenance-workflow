@@ -241,6 +241,18 @@ function CommunicationsSection() {
         save={(phone) => setAgencySmsNumber({ data: { phone } })}
       />
 
+      <NumberField
+        id="agency-whatsapp-sender"
+        title="Agency WhatsApp sender"
+        description="Your WhatsApp business phone-number ID (digits) or business number. Inbound WhatsApp messages to this sender are routed to your agency only."
+        statusLabel="Inbound WhatsApp"
+        statusValue={comms.whatsappSender ? "Connected" : "Needs configuring"}
+        placeholder="1251679104695078"
+        current={comms.whatsappSender}
+        allowNonPhone
+        save={(sender) => setAgencyWhatsappSender({ data: { sender } })}
+      />
+
       {!comms.smsNumber && (
         <p className="mt-4 text-xs text-destructive">
           No SMS number configured — Ovelo cannot send tenant, landlord, contractor or agency
