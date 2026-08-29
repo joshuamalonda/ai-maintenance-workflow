@@ -209,7 +209,13 @@ async function registerEndpoint(
   if (deactivateError) throw new Error(deactivateError.message);
 
   const mine = (existing ?? []).find((row) => row.agency_id === agencyId);
-  const label = channel === "phone" ? "Agency voice number" : "Agency SMS number";
+  const label =
+    channel === "phone"
+      ? "Agency voice number"
+      : channel === "sms"
+        ? "Agency SMS number"
+        : "Agency WhatsApp sender";
+
 
   if (mine) {
     const { error } = await supabaseAdmin
