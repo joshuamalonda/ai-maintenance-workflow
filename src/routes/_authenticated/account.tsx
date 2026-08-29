@@ -273,7 +273,10 @@ function NumberField(props: {
   statusValue: string;
   placeholder: string;
   current: string | null;
+  /** WhatsApp senders may be a digits-only business phone-number ID. */
+  allowNonPhone?: boolean;
   save: (phone: string) => Promise<AgencyCommunications>;
+
 }) {
   const queryClient = useQueryClient();
   const [value, setValue] = useState(props.current ?? "");
