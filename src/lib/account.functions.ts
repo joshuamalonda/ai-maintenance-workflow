@@ -73,7 +73,11 @@ export type AgencyCommunications = {
   /** SMS-capable mobile in E.164 (outbound SMS sender), or null. */
   smsNumber: string | null;
   smsEndpointId: string | null;
+  /** WhatsApp business sender: phone-number ID or E.164 sender, or null. */
+  whatsappSender: string | null;
+  whatsappEndpointId: string | null;
 };
+
 
 /** Resolves the caller's agency through their membership. */
 async function currentAgencyId(
