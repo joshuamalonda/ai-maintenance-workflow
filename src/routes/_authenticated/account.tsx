@@ -219,7 +219,7 @@ function CommunicationsSection() {
 
   return (
     <section className="mt-6 rounded-lg border border-border bg-surface p-5">
-      <h2 className="text-sm font-semibold text-ink">Phone &amp; SMS</h2>
+      <h2 className="text-sm font-semibold text-ink">Phone, SMS &amp; WhatsApp</h2>
 
       <NumberField
         id="agency-voice-number"
