@@ -1,0 +1,11 @@
+REVOKE ALL ON FUNCTION public.bootstrap_first_admin() FROM anon, authenticated, public;
+REVOKE ALL ON FUNCTION public.has_role(uuid, public.app_role) FROM anon, authenticated, public;
+REVOKE ALL ON FUNCTION public.is_console_user(uuid) FROM anon, authenticated, public;
+REVOKE ALL ON FUNCTION public.next_case_reference() FROM anon, authenticated, public;
+REVOKE ALL ON FUNCTION public.update_updated_at_column() FROM anon, authenticated, public;
+REVOKE ALL ON FUNCTION public.create_agency_for_current_user(text) FROM anon, public;
+GRANT EXECUTE ON FUNCTION public.create_agency_for_current_user(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.has_role(uuid, public.app_role) TO service_role;
+GRANT EXECUTE ON FUNCTION public.is_console_user(uuid) TO service_role;
+GRANT EXECUTE ON FUNCTION public.next_case_reference() TO service_role;
+GRANT EXECUTE ON FUNCTION public.create_agency_for_current_user(text) TO service_role;
