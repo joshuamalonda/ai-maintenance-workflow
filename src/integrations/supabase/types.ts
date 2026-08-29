@@ -572,6 +572,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_agency_for_current_user: {
+        Args: { _name: string }
+        Returns: {
+          id: string
+          name: string
+          notification_phone: string
+          slug: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

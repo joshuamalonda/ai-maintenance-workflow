@@ -14,15 +14,25 @@ export type AgencyAccount = {
 export const getAgencyAccount = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { data: membership, error: memberError } = await context.supabase
+      .from("agency_members")
+      .select("agency_id")
+      .eq("user_id", context.userId)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (memberError) throw new Error(memberError.message);
+    if (!membership) return null;
+
     const { data, error } = await context.supabase
       .from("agencies")
       .select("id, name, slug, notification_phone")
-      .order("created_at", { ascending: true })
-      .limit(1)
+      .eq("id", membership.agency_id)
       .maybeSingle();
     if (error) throw new Error(error.message);
     return (data ?? null) as AgencyAccount | null;
   });
+
 
 /**
  * Saves (or clears) the agency notification mobile number. RLS restricts the
