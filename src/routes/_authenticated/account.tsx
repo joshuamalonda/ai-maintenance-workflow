@@ -311,18 +311,27 @@ function NumberField(props: {
         onSubmit={(e) => {
           e.preventDefault();
           const trimmed = value.trim();
-          const e164 = toE164(trimmed);
-          if (!e164 || !isValidNotificationPhone(trimmed)) {
-            setError("Enter a valid number in international format, e.g. +447700900123.");
-            return;
+          if (props.allowNonPhone) {
+            const digits = trimmed.replace(/[^0-9]/g, "");
+            if (digits.length < 6 || digits.length > 25) {
+              setError("Enter the WhatsApp business phone-number ID or business number.");
+              return;
+            }
+          } else {
+            const e164 = toE164(trimmed);
+            if (!e164 || !isValidNotificationPhone(trimmed)) {
+              setError("Enter a valid number in international format, e.g. +447700900123.");
+              return;
+            }
           }
           setError(null);
           mutation.mutate(trimmed);
         }}
       >
         <label className={labelClass} htmlFor={props.id}>
-          Number
+          {props.allowNonPhone ? "Sender ID or number" : "Number"}
         </label>
+
         <input
           id={props.id}
           type="tel"
