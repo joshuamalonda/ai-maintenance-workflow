@@ -18,7 +18,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "AI Case Console"
+const SITE_NAME = "OVELO"
 const ROOT_DOMAIN = "app.ovelo.tech"
 
 // Sample data for preview mode ONLY (not used in actual email sending).

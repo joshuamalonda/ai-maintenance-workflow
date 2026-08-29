@@ -9,7 +9,7 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
-const SITE_NAME = "AI Case Console"
+const SITE_NAME = "OVELO"
 const SENDER_DOMAIN = "notify.app.ovelo.tech"
 const ROOT_DOMAIN = "app.ovelo.tech"
 const FROM_DOMAIN = "app.ovelo.tech"
