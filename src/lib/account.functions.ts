@@ -256,3 +256,17 @@ export const setAgencySmsNumber = createServerFn({ method: "POST" })
     return await registerEndpoint(agencyId, "sms", data.phone);
   });
 
+/**
+ * Registers the agency's WhatsApp business sender (Meta phone-number ID or the
+ * business number). Inbound WhatsApp intake resolves this endpoint to the
+ * owning agency, so onboarding never needs a hard-coded global sender.
+ */
+export const setAgencyWhatsappSender = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ sender: z.string().min(1).max(50) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const agencyId = await currentAgencyId(context.supabase as never, context.userId);
+    return await registerEndpoint(agencyId, "whatsapp", data.sender);
+  });
+
+
