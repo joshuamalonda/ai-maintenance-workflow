@@ -1,26 +1,62 @@
 # Ovelo Maintenance
 
-Build me a web application called AI Maintenance Operations. This is an internal dashboard for a letting agency to monitor maintenance cases handled by an AI assistant. Connect the application to Supabase. The dashboard should display maintenance cases stored in the maintenance_cases table. Create three sections: Needs Attention, In Progress and Completed. Each case should show tenant name, property address, issue category, urgency and status. Clicking a case should open a detailed case page showing the AI summary, issue description and case information. Use a clean professional B2B SaaS design. Do not build a CRM, property management system or tenant database. This is an AI operations console only
+Ovelo Maintenance is an AI-powered maintenance operations dashboard built for letting agencies.
 
-This project was built with [Lovable](https://lovable.dev).
+The application is designed to help agency teams monitor and manage maintenance cases handled by an AI assistant, without trying to replace their existing CRM or property management software.
 
-**Live app**: https://ops-ai-watch.lovable.app
+## What it does
 
-## Build with Lovable
+The dashboard connects to Supabase and displays maintenance cases stored in the `maintenance_cases` table.
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/17bba302-99e6-4a24-ad96-1cd5e527c0bf).
+Cases are organised into three sections:
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+- Needs Attention
+- In Progress
+- Completed
+
+Each case displays:
+
+- Tenant name
+- Property address
+- Issue category
+- Urgency
+- Status
+
+Selecting a case opens a detailed view containing:
+
+- AI-generated case summary
+- Issue description
+- Case information
+- Current status
+
+## Product focus
+
+Ovelo is designed as an AI operations console for maintenance workflows.
+
+It is intentionally not a CRM, property management system, or tenant database.
+
+The goal is to give letting agencies a simple interface for reviewing and managing maintenance cases processed by AI.
+
+## Tech stack
+
+- React
+- TypeScript
+- Supabase
+- PostgreSQL
+- Lovable
+
+## Live app
+
+https://app.ovelo.tech
 
 ## Development
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+This project was initially built using Lovable and is synced with GitHub.
+
+To run the project locally:
 
 ```sh
 git clone <this-repository-url>
 cd <repository-name>
-npm i
+npm install
 npm run dev
-```
