@@ -64,7 +64,7 @@ export const Route = createFileRoute("/_authenticated/account")({
   }),
   errorComponent: ({ error }) => (
     <div role="alert" className="mx-auto max-w-2xl px-6 py-24 text-center text-sm text-ink">
-      {error.message}
+      {error instanceof Error ? error.message : "Something went wrong"}
     </div>
   ),
   notFoundComponent: () => (
