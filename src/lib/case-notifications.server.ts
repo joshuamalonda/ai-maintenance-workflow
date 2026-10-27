@@ -46,7 +46,7 @@ export async function claimCaseCreatedNotification(
 
 /**
  * Directory numbers are typed by agency staff, commonly in UK national form
- * ("07726 730729"). Convert those to E.164 so they are not silently skipped.
+ * ("07700 900123"). Convert those to E.164 so they are not silently skipped.
  * Anything already international, or not recognisably UK, is left untouched.
  */
 export function toE164(raw: string | null | undefined): string | null {
