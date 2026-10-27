@@ -1,7 +1,7 @@
 // Shared, dependency-free phone helpers. Safe to import from client and server.
 
 /**
- * Normalises common UK input forms ("07726 730729", "44...", "0044...") to
+ * Normalises common UK input forms ("07700 900123", "44...", "0044...") to
  * E.164. Anything already international is returned as-is.
  */
 export function toE164(raw: string | null | undefined): string | null {
